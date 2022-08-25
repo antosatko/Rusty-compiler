@@ -18,24 +18,39 @@ fun matchNum(rand: int, guess: int): comparison {
     }
 }
 
-fun main() {
-    int! randNum = 7;
-    int guess;
-    std.println("Welcome to number guessing game!");
+fun again(): bool {
+    io.println("Play again? (y/n)");
+    char? ans;
+    io.getChar(&ans);
+    return ans == 'y'
+}
+
+fun gameLoop() {
+    int randNum = 7;
+    int? guess;
+
     loop {
-        std.print("Your guess: ");
-        std.getInt(&guess);
+        io.print("Your guess: ");
+        io.getInt(&guess);
         switch matchNum(randNum, guess){
             comparison.Equal {
-                std.println("You won!");
+                io.println("You won!");
                 break;
             }
             comparison.Lower {
-                std.println("Too low.");
+                io.println("Too low.");
             }
             comparison.Higher {
-                std.println("Too high.");
+                io.println("Too high.");
             }
         }
     }
+}
+
+fun main() {
+    io.println("Welcome to number guessing game!");
+    do {
+        gameLoop();
+    } while again();
+    io.println("Thank you for playing.");
 }
