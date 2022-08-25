@@ -57,15 +57,16 @@ pub mod writer {
                 let bytes = unsafe { std::mem::transmute::<f64, u64>(float) };
                 format!("{}{:16x}", 66 as char, bytes).replace(" ", "0")
             }
-            Byte(byte) => format!("{}{:2x}", 67 as char, byte).replace(" ", "0"),
+            Byte(byte) => format!("{}{byte:2x}", 67 as char).replace(" ", "0"),
             Char(char) => format!("{}{:2x}", 68 as char, char as u8).replace(" ", "0"),
-            Usize(usize) => format!("{}{:32x}", 69 as char, usize).replace(" ", "0"),
+            Usize(usize) => format!("{}{usize:32x}", 69 as char).replace(" ", "0"),
             Bool(bool) => {
                 let num = if bool { 1 } else { 0 };
                 format!("{}{:1x}", 70 as char, num).replace(" ", "0")
             }
             Pointer(num, num1) => String::new(),
             Null => format!("{}", 71 as char),
+            Enum(loc, offset) => format!("{}{loc:16x}{offset:2x}", 72 as char).replace(" ", "0"),
         }
     }
     pub fn instr_to_str(instr: Instructions) -> String {

@@ -19,10 +19,10 @@ fun matchNum(rand: int, guess: int): comparison {
 }
 
 fun main() {
-    int randNum = 7;
-    std.println("Welcome to number guessing game!");
+    int! randNum = 7;
     int guess;
-    while guess != randNum {
+    std.println("Welcome to number guessing game!");
+    loop {
         std.print("Your guess: ");
         std.getInt(&guess);
         switch matchNum(randNum, guess){
