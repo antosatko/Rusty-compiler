@@ -64,7 +64,7 @@ pub mod writer {
                 let num = if bool { 1 } else { 0 };
                 format!("{}{:1x}", 70 as char, num).replace(" ", "0")
             }
-            Pointer(num, num1) => String::new(),
+            Pointer(_, _) => String::new(),
             Null => format!("{}", 71 as char),
             Enum(loc, offset) => format!("{}{loc:16x}{offset:2x}", 72 as char).replace(" ", "0"),
         }
