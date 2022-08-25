@@ -1,0 +1,41 @@
+use std.io;
+
+enum comparison {
+    Equal,
+    Lower,
+    Higher,
+}
+
+fun matchNum(rand: int, guess: int): comparison {
+    return if guess == randNum {
+        comparison.Equal
+    }
+    else if guess < randNum {
+        comparison.Lower
+    } 
+    else {
+        comparison.Higher
+    }
+}
+
+fun main() {
+    int randNum = 7;
+    std.println("Welcome to number guessing game!");
+    int guess;
+    while guess != randNum {
+        std.print("Your guess: ");
+        std.getInt(&guess);
+        switch matchNum(randNum, guess){
+            comparison.Equal {
+                break;
+            }
+            comparison.Lower {
+                std.println("Too low.");
+            }
+            comparison.Higher {
+                std.println("Too high.");
+            }
+        }
+    }
+    std.println("You won!");
+}

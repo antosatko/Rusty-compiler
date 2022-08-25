@@ -1,6 +1,4 @@
 pub mod writer {
-    use std::fmt::format;
-
     use crate::runtime::runtime_types::{Instructions, Types};
     pub fn write(code: &Vec<Instructions>, consts: &Vec<Types>) {
         use std::fs::File;
@@ -11,8 +9,20 @@ pub mod writer {
     }
     pub fn to_string(code: &Vec<Instructions>, consts: &Vec<Types>) -> String {
         let mut str = String::new();
-        for con in consts.iter() {
-            str.push_str(&val_to_string(*con))
+        let mut i = 0;
+        while i < consts.len() {
+            if let Types::Char(_) = consts[i] {
+                if let Some(string) = get_str(i, &consts) {
+                    str.push_str(&string);
+                    i += string.len() - 1;
+                } else {
+                    str.push_str(&val_to_string(consts[i]));
+                    i += 1;
+                }
+            } else {
+                str.push_str(&val_to_string(consts[i]));
+                i += 1;
+            }
         }
         str.push_str("?");
         for instr in code.iter() {
@@ -20,6 +30,21 @@ pub mod writer {
         }
         str.push_str("?");
         str
+    }
+    pub fn get_str(mut index: usize, consts: &Vec<Types>) -> Option<String> {
+        let mut str = String::from("\"");
+        while let Types::Char(char) = consts[index] {
+            if index >= consts.len() {
+                break;
+            }
+            if char == '\0' {
+                str.push('"');
+                return Some(str);
+            }
+            index += 1;
+            str.push(char);
+        }
+        None
     }
     pub fn val_to_string(val: Types) -> String {
         use Types::*;

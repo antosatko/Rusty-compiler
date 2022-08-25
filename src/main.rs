@@ -1,7 +1,5 @@
 
 use std::env;
-use std::fs::File;
-use std::io::prelude::*;
 mod canvas;
 /*use std::io::BufReader;
 use std::time::Instant;
@@ -15,7 +13,6 @@ use runtime_types::*;
 mod reader;
 use reader::reader::*;
 mod writer;
-use writer::writer::*;
 
 
 #[derive(Debug, EnumIter)]
