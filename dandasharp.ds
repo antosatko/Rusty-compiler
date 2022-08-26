@@ -2,19 +2,19 @@ use std.io;
 
 enum comparison {
     Equal,
-    Lower,
-    Higher,
+    Less,
+    More,
 }
 
-fun matchNum(rand: int, guess: int): comparison {
+fun compareNum(rand: int, guess: int): comparison {
     return if guess == randNum {
         comparison.Equal
     }
     else if guess < randNum {
-        comparison.Lower
+        comparison.Less
     } 
     else {
-        comparison.Higher
+        comparison.More
     }
 }
 
@@ -29,18 +29,18 @@ fun gameLoop() {
     int randNum = 7;
     int? guess;
 
-    loop {
+    'a: loop {
         io.print("Your guess: ");
         io.getInt(&guess);
-        switch matchNum(randNum, guess){
+        switch compareNum(randNum, guess){
             comparison.Equal {
                 io.println("You won!");
-                break;
+                break 'a;
             }
-            comparison.Lower {
+            comparison.Less {
                 io.println("Too low.");
             }
-            comparison.Higher {
+            comparison.More {
                 io.println("Too high.");
             }
         }
