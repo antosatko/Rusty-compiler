@@ -1,3 +1,4 @@
+use std.numbers as math;
 use std.io;
 
 enum comparison {
@@ -26,7 +27,7 @@ fun again(): bool {
 }
 
 fun gameLoop() {
-    int randNum = 7;
+    int randNum = math.randInt() % 100;
     int? guess;
 
     'a: loop {
