@@ -71,6 +71,13 @@ struct Ball {
         }
     }
 
+    fun reset(self) {
+        self.x = SCREEN_WIDTH / 2;
+        self.y = SCREEN_WIDTH / 2;
+        self.xs = numbers.randFloat() % 2 - 1;
+        self.ys = numbers.randFloat() % 2 - 1;
+    }
+
     fun move(self, dt: float): int {
         self.x += self.xs * dt;
         self.y += self.ys * dt;
@@ -88,6 +95,10 @@ struct Ball {
             self.ys *= -1;
             self.y = SCREEN_HEIGHT - BALL_SIDE / 2
         }
+    }
+
+    fun collision(self, player: Player) {
+        // not in a mood to do that now
     }
 }
 
@@ -108,7 +119,31 @@ fun main() {
 
         p1.move(controls.KeyW, controls.KeyS, dt);
         p2.move(controls.ArrowUp, controls.ArrowDown, dt);
+        switch ball.move(dt){
+            -1 {
+                p1.addPoint();
+                ball.reset();
+            }
+            1 {
+                p2.addPoint();
+                ball.reset();
+            }
+            _ break
+        }
+
+        ball.collision(p1);
+        ball.collision(p2);
+
+        if p1.score > 10 {
+            // somehow declare that p1 wins
+            break;
+        }
+        if p2.score > 10 {
+            // somehow declare that p2 wins
+            break;
+        }
     }
+    // wait until user stops program then terminate
 }
 
 fun drawThings(p1: Player, p2: Player, ball: Ball) {
