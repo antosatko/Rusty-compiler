@@ -111,4 +111,6 @@ fun main() {
     }
 }
 
-fun drawThings(p1: Player, p2: Player, ball: Ball)
+fun drawThings(p1: Player, p2: Player, ball: Ball) {
+    // some library dependent stuff
+}
