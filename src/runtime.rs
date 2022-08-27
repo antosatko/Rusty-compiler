@@ -396,7 +396,7 @@ pub mod runtime_types {
         Bool(bool),
         Pointer(usize, PointerTypes),
         Null,
-        Enum(usize, u8),
+        Enum(u8),
     }
     #[derive(Clone, Copy, Debug)]
     pub enum PointerTypes {

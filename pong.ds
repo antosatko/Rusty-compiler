@@ -115,7 +115,7 @@ fun main() {
         time = numbers.time();
         dt = (time - lastFrame) as float / FPS;
 
-        controls.update()
+        controls.update();
 
         p1.move(controls.KeyW, controls.KeyS, dt);
         p2.move(controls.ArrowUp, controls.ArrowDown, dt);

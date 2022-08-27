@@ -60,7 +60,7 @@ pub mod reader {
                     self.ctx.stack.push(Types::Char('\0'));
                     return;
                 }
-                72 => Types::Enum(self.read_unumber(16), self.read_unumber(2) as u8),
+                72 => Types::Enum(self.read_unumber(2) as u8),
                 _ => {
                     panic!(
                         "Unexpected character '{}' at {}.",

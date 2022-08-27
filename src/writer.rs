@@ -66,7 +66,7 @@ pub mod writer {
             }
             Pointer(_, _) => String::new(),
             Null => format!("{}", 71 as char),
-            Enum(loc, offset) => format!("{}{loc:16x}{offset:2x}", 72 as char).replace(" ", "0"),
+            Enum(offset) => format!("{}{offset:2x}", 72 as char).replace(" ", "0"),
         }
     }
     pub fn instr_to_str(instr: Instructions) -> String {
