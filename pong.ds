@@ -103,9 +103,9 @@ struct Ball {
 }
 
 fun main() {
-    int time = numbers.time();
-    int lastFrame = time;
-    float dt = 0;
+    let time: int = numbers.time();
+    let lastFrame = time;
+    let dt = 0;
     let controls = Controls.new();
     let p1 = Player.new(MARGIN);
     let p2 = Player.new(SCREEN_WIDTH - P_WIDTH - MARGIN);

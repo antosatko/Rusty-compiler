@@ -61,6 +61,7 @@ pub mod reader {
                     return;
                 }
                 72 => Types::Enum(self.read_unumber(2) as u8),
+                73 => Types::CodePointer(self.read_unumber(32) as usize),
                 _ => {
                     panic!(
                         "Unexpected character '{}' at {}.",
@@ -105,6 +106,7 @@ pub mod reader {
                 92 => Instructions::Repp(self.read_unumber(1)),
                 93 => Instructions::Less,
                 94 => Instructions::Debug(self.read_unumber(1)),
+                95 => Instructions::Gotop(self.read_unumber(1)),
                 _ => {
                     panic!(
                         "Unexpected character '{}' at {}.",

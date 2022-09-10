@@ -67,6 +67,7 @@ pub mod writer {
             Pointer(_, _) => String::new(),
             Null => format!("{}", 71 as char),
             Enum(offset) => format!("{}{offset:2x}", 72 as char).replace(" ", "0"),
+            CodePointer(u_size) => format!("{}{u_size:32x}", 73 as char).replace(" ", "0"),
         }
     }
     pub fn instr_to_str(instr: Instructions) -> String {
@@ -102,6 +103,7 @@ pub mod writer {
             Repp(n) => format!("{}{}", 92 as char, num_to_hbytes1(n)),
             Less => format!("{}", 93 as char),
             Debug(n) => format!("{}{}", 94 as char, num_to_hbytes1(n)),
+            Gotop(n) => format!("{}{}", 95 as char, num_to_hbytes4(n)),
         }
     }
     pub fn num_to_hbytes1(num: usize) -> String {

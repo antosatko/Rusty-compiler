@@ -1,6 +1,9 @@
 pub mod runtime {
     use core::panic;
 
+    use crate::runtime::runtime_error;
+
+    use super::runtime_error::*;
     use super::runtime_types::*;
 
     impl Context {
@@ -159,6 +162,13 @@ pub mod runtime {
                 Goto(pos) => {
                     self.code_ptr = pos;
                 }
+                Gotop(pos) => {
+                    if let Types::CodePointer(u_size) = self.registers[pos] {
+                        self.code_ptr = u_size
+                    } else {
+                        panic!("problem")
+                    }
+                }
                 Brnc(pos1, pos2) => {
                     if let Types::Bool(bool) = self.registers[0] {
                         self.code_ptr = if bool { pos1 } else { pos2 };
@@ -192,25 +202,44 @@ pub mod runtime {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Int(num1 + num2);
                             } else {
-                                panic!(
-                                    "Operation '{:?}' failed: Cross-type operation {:?}, {:?}",
-                                    self.code[self.code_ptr], self.registers[0], self.registers[1]
-                                );
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         Types::Float(num1) => {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Float(num1 + num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         Types::Byte(num1) => {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Byte(num1 + num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         Types::Usize(num1) => {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Usize(num1 + num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         _ => {
@@ -219,56 +248,465 @@ pub mod runtime {
                     }
                     self.next_line();
                 }
-                Sub => {}
-                Mul => {}
-                Div => {}
-                Mod => {}
+                Sub => {
+                    match self.registers[0] {
+                        Types::Int(num1) => {
+                            if let Types::Int(num2) = self.registers[1] {
+                                self.registers[0] = Types::Int(num1 - num2);
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Float(num1) => {
+                            if let Types::Float(num2) = self.registers[1] {
+                                self.registers[0] = Types::Float(num1 - num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Byte(num1) => {
+                            if let Types::Byte(num2) = self.registers[1] {
+                                self.registers[0] = Types::Byte(num1 - num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Usize(num1) => {
+                            if let Types::Usize(num2) = self.registers[1] {
+                                self.registers[0] = Types::Usize(num1 - num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        _ => {
+                            panic!("Can not perform math operations on non-number values.")
+                        }
+                    }
+                    self.next_line();
+                }
+                Mul => {
+                    match self.registers[0] {
+                        Types::Int(num1) => {
+                            if let Types::Int(num2) = self.registers[1] {
+                                self.registers[0] = Types::Int(num1 * num2);
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Float(num1) => {
+                            if let Types::Float(num2) = self.registers[1] {
+                                self.registers[0] = Types::Float(num1 * num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Byte(num1) => {
+                            if let Types::Byte(num2) = self.registers[1] {
+                                self.registers[0] = Types::Byte(num1 * num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Usize(num1) => {
+                            if let Types::Usize(num2) = self.registers[1] {
+                                self.registers[0] = Types::Usize(num1 * num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        _ => {
+                            panic!("Can not perform math operations on non-number values.")
+                        }
+                    }
+                    self.next_line();
+                }
+                Div => {
+                    match self.registers[0] {
+                        Types::Int(num1) => {
+                            if let Types::Int(num2) = self.registers[1] {
+                                self.registers[0] = Types::Int(num1 / num2);
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Float(num1) => {
+                            if let Types::Float(num2) = self.registers[1] {
+                                self.registers[0] = Types::Float(num1 / num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Byte(num1) => {
+                            if let Types::Byte(num2) = self.registers[1] {
+                                self.registers[0] = Types::Byte(num1 / num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Usize(num1) => {
+                            if let Types::Usize(num2) = self.registers[1] {
+                                self.registers[0] = Types::Usize(num1 / num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        _ => {
+                            panic!("Can not perform math operations on non-number values.")
+                        }
+                    }
+                    self.next_line();
+                }
+                Mod => {
+                    match self.registers[0] {
+                        Types::Int(num1) => {
+                            if let Types::Int(num2) = self.registers[1] {
+                                self.registers[0] = Types::Int(num1 % num2);
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Float(num1) => {
+                            if let Types::Float(num2) = self.registers[1] {
+                                self.registers[0] = Types::Float(num1 % num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Byte(num1) => {
+                            if let Types::Byte(num2) = self.registers[1] {
+                                self.registers[0] = Types::Byte(num1 % num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Usize(num1) => {
+                            if let Types::Usize(num2) = self.registers[1] {
+                                self.registers[0] = Types::Usize(num1 % num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        _ => {
+                            panic!("Can not perform math operations on non-number values.")
+                        }
+                    }
+                    self.next_line();
+                }
                 Equ => {
                     match self.registers[0] {
                         Types::Int(num1) => {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2);
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         Types::Float(num1) => {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         Types::Byte(num1) => {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         Types::Usize(num1) => {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         Types::Pointer(num1, _) => {
                             if let Types::Pointer(num2, _) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         Types::Bool(var1) => {
                             if let Types::Bool(var2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(var1 == var2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         Types::Char(char1) => {
                             if let Types::Char(char2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(char1 == char2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
                             }
                         }
                         _ => {}
                     }
                     self.next_line();
                 }
-                Grt => {}
-                Less => {}
-                And => {}
-                Or => {}
-                Not => {}
+                Grt => {
+                    match self.registers[0] {
+                        Types::Int(num1) => {
+                            if let Types::Int(num2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(num1 > num2);
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Float(num1) => {
+                            if let Types::Float(num2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(num1 > num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Byte(num1) => {
+                            if let Types::Byte(num2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(num1 > num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Usize(num1) => {
+                            if let Types::Usize(num2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(num1 > num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Char(char1) => {
+                            if let Types::Char(char2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(char1 > char2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        _ => {}
+                    }
+                    self.next_line();
+                }
+                Less => {
+                    match self.registers[0] {
+                        Types::Int(num1) => {
+                            if let Types::Int(num2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(num1 < num2);
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Float(num1) => {
+                            if let Types::Float(num2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(num1 < num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Byte(num1) => {
+                            if let Types::Byte(num2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(num1 < num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Usize(num1) => {
+                            if let Types::Usize(num2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(num1 < num2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        Types::Char(char1) => {
+                            if let Types::Char(char2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(char1 < char2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        _ => {}
+                    }
+                    self.next_line();
+                }
+                And => {
+                    match self.registers[0] {
+                        Types::Bool(var1) => {
+                            if let Types::Bool(var2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(var1 && var2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        _ => {}
+                    }
+                    self.next_line();
+                }
+                Or => {
+                    match self.registers[0] {
+                        Types::Bool(var1) => {
+                            if let Types::Bool(var2) = self.registers[1] {
+                                self.registers[0] = Types::Bool(var1 || var2)
+                            } else {
+                                return panicRT(ErrTypes::CrossTypeOperation(
+                                    self.registers[0],
+                                    self.registers[1],
+                                    self.code[self.code_ptr],
+                                ));
+                            }
+                        }
+                        _ => {}
+                    }
+                    self.next_line();
+                }
+                Not => {
+                    match self.registers[0] {
+                        Types::Bool(var) => self.registers[0] = Types::Bool(!var),
+                        _ => {
+                            return panicRT(ErrTypes::WrongTypeOperation(
+                                self.registers[0],
+                                self.code[self.code_ptr],
+                            ));
+                        }
+                    }
+                    self.next_line();
+                }
                 Cal(procedure, args) => {}
                 End => {
                     return false;
@@ -368,6 +806,31 @@ pub mod runtime {
     }
 }
 
+pub mod runtime_error {
+    use super::runtime_types::*;
+    pub enum ErrTypes {
+        CrossTypeOperation(Types, Types, Instructions),
+        WrongTypeOperation(Types, Instructions),
+    }
+    pub fn panicRT(kind: ErrTypes) -> bool {
+        match kind {
+            ErrTypes::CrossTypeOperation(var1, var2, instr) => {
+                println!(
+                    "Operation '{:?}' failed: Cross-type operation {:?}, {:?}",
+                    instr, var1, var2
+                )
+            }
+            ErrTypes::WrongTypeOperation(var1, instr) => {
+                println!(
+                    "Operation '{:?}' failed: Wrong-type operation {:?}",
+                    instr, var1
+                )
+            }
+        }
+        false
+    }
+}
+
 pub mod runtime_types {
     pub struct Context {
         pub stack: Vec<Types>,
@@ -395,6 +858,7 @@ pub mod runtime_types {
         Byte(u8),
         Bool(bool),
         Pointer(usize, PointerTypes),
+        CodePointer(usize),
         Null,
         Enum(u8),
     }
@@ -420,6 +884,7 @@ pub mod runtime_types {
         Dalc(usize),
         RAlc(usize, usize),
         Goto(usize),
+        Gotop(usize),
         Brnc(usize, usize),
         Ret,
         Res(usize),
