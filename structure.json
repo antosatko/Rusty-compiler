@@ -1,0 +1,46 @@
+{
+    "on_newline": true,
+    "keyword":{
+        "let":{
+
+        },
+        "for":{
+
+        },
+        "while":{
+
+        },
+        "loop":{
+
+        },
+        "return":{
+
+        },
+        "const":{
+
+        },
+        "fun":{
+
+        },
+        "if":{
+
+        },
+        "switch":{
+
+        },
+        "enum":{
+
+        },
+        "struct":{
+            "name": {
+                
+            }
+        },
+        "scope":{
+            "newline":true
+        }
+    },
+    "value": {
+
+    }
+}

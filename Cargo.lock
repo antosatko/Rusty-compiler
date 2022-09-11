@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "file_manip"
+name = "danda_sharp"
 version = "0.1.0"
 dependencies = [
  "strum",

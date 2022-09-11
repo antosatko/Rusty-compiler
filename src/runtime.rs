@@ -86,7 +86,10 @@ pub mod runtime {
                             }
                         }
                     } else {
-                        panic!("Pointer must be of type 'Pointer'")
+                        return panic_rt(ErrTypes::InvalidType(
+                            self.registers[reg2],
+                            String::from("Pointer"),
+                        ));
                     }
                     self.next_line();
                 }
@@ -166,7 +169,10 @@ pub mod runtime {
                     if let Types::CodePointer(u_size) = self.registers[pos] {
                         self.code_ptr = u_size
                     } else {
-                        panic!("problem")
+                        return panic_rt(ErrTypes::InvalidType(
+                            self.registers[pos],
+                            String::from("Function"),
+                        ));
                     }
                 }
                 Brnc(pos1, pos2) => {
@@ -202,7 +208,7 @@ pub mod runtime {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Int(num1 + num2);
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -213,7 +219,7 @@ pub mod runtime {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Float(num1 + num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -224,7 +230,7 @@ pub mod runtime {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Byte(num1 + num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -235,7 +241,7 @@ pub mod runtime {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Usize(num1 + num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -254,7 +260,7 @@ pub mod runtime {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Int(num1 - num2);
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -265,7 +271,7 @@ pub mod runtime {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Float(num1 - num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -276,7 +282,7 @@ pub mod runtime {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Byte(num1 - num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -287,7 +293,7 @@ pub mod runtime {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Usize(num1 - num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -306,7 +312,7 @@ pub mod runtime {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Int(num1 * num2);
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -317,7 +323,7 @@ pub mod runtime {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Float(num1 * num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -328,7 +334,7 @@ pub mod runtime {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Byte(num1 * num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -339,7 +345,7 @@ pub mod runtime {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Usize(num1 * num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -358,7 +364,7 @@ pub mod runtime {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Int(num1 / num2);
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -369,7 +375,7 @@ pub mod runtime {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Float(num1 / num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -380,7 +386,7 @@ pub mod runtime {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Byte(num1 / num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -391,7 +397,7 @@ pub mod runtime {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Usize(num1 / num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -410,7 +416,7 @@ pub mod runtime {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Int(num1 % num2);
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -421,7 +427,7 @@ pub mod runtime {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Float(num1 % num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -432,7 +438,7 @@ pub mod runtime {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Byte(num1 % num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -443,7 +449,7 @@ pub mod runtime {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Usize(num1 % num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -462,7 +468,7 @@ pub mod runtime {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2);
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -473,7 +479,7 @@ pub mod runtime {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -484,7 +490,7 @@ pub mod runtime {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -495,7 +501,7 @@ pub mod runtime {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -506,7 +512,7 @@ pub mod runtime {
                             if let Types::Pointer(num2, _) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 == num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -517,7 +523,7 @@ pub mod runtime {
                             if let Types::Bool(var2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(var1 == var2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -528,7 +534,7 @@ pub mod runtime {
                             if let Types::Char(char2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(char1 == char2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -545,7 +551,7 @@ pub mod runtime {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 > num2);
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -556,7 +562,7 @@ pub mod runtime {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 > num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -567,7 +573,7 @@ pub mod runtime {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 > num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -578,7 +584,7 @@ pub mod runtime {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 > num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -589,7 +595,7 @@ pub mod runtime {
                             if let Types::Char(char2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(char1 > char2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -606,7 +612,7 @@ pub mod runtime {
                             if let Types::Int(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 < num2);
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -617,7 +623,7 @@ pub mod runtime {
                             if let Types::Float(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 < num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -628,7 +634,7 @@ pub mod runtime {
                             if let Types::Byte(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 < num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -639,7 +645,7 @@ pub mod runtime {
                             if let Types::Usize(num2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(num1 < num2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -650,7 +656,7 @@ pub mod runtime {
                             if let Types::Char(char2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(char1 < char2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -667,7 +673,7 @@ pub mod runtime {
                             if let Types::Bool(var2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(var1 && var2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -684,7 +690,7 @@ pub mod runtime {
                             if let Types::Bool(var2) = self.registers[1] {
                                 self.registers[0] = Types::Bool(var1 || var2)
                             } else {
-                                return panicRT(ErrTypes::CrossTypeOperation(
+                                return panic_rt(ErrTypes::CrossTypeOperation(
                                     self.registers[0],
                                     self.registers[1],
                                     self.code[self.code_ptr],
@@ -699,7 +705,7 @@ pub mod runtime {
                     match self.registers[0] {
                         Types::Bool(var) => self.registers[0] = Types::Bool(!var),
                         _ => {
-                            return panicRT(ErrTypes::WrongTypeOperation(
+                            return panic_rt(ErrTypes::WrongTypeOperation(
                                 self.registers[0],
                                 self.code[self.code_ptr],
                             ));
@@ -747,6 +753,7 @@ pub mod runtime {
                 self.heap_registry.remove(index);
             }
         }
+        /// returns index in heap registry and index in heap
         pub fn heap_reg_idx(&self, idx: usize) -> Option<(usize, usize)> {
             if self.heap_registry.len() == 0 {
                 return None;
@@ -763,7 +770,6 @@ pub mod runtime {
             let mut i = 0;
             while i < idx {
                 if let Some(next) = self.heap_registry[hr_path.0].next {
-                    //println!("{} {}", hr_path.1, self.heap_registry[hr_path.0].len);
                     hr_path.0 = next;
                     hr_path.1 += self.heap_registry[hr_path.0].len;
                 } else {
@@ -772,7 +778,6 @@ pub mod runtime {
                 i += self.heap_registry[hr_path.0].dels + 1;
             }
             hr_path.1 -= 1;
-            //println!("{:?}", hr_path);
             Some(hr_path)
         }
         pub fn heap_reg_push(&mut self, len: usize) {
@@ -811,8 +816,9 @@ pub mod runtime_error {
     pub enum ErrTypes {
         CrossTypeOperation(Types, Types, Instructions),
         WrongTypeOperation(Types, Instructions),
+        InvalidType(Types, String),
     }
-    pub fn panicRT(kind: ErrTypes) -> bool {
+    pub fn panic_rt(kind: ErrTypes) -> bool {
         match kind {
             ErrTypes::CrossTypeOperation(var1, var2, instr) => {
                 println!(
@@ -825,6 +831,9 @@ pub mod runtime_error {
                     "Operation '{:?}' failed: Wrong-type operation {:?}",
                     instr, var1
                 )
+            }
+            ErrTypes::InvalidType(typ, operation) => {
+                println!("Invalid Type: {:?} must be of type '{:?}'", typ, operation)
             }
         }
         false
