@@ -111,6 +111,7 @@ fn main() {
 /// idx reg1 reg2         |28| Index          | gets pointer from reg(<reg1>) repairs it and adds reg(<reg2>)
 /// repp reg              |29| Repair pointer | Repairs pointer in reg(<reg>)
 /// LESS                  |30| less than      | reg(0) is set to the result of operation: reg(0) < reg(1)
+/// Gotop reg             |31| goto pointer   | moves code pointer to reg(<reg>)
 /// 
 /// 
 /// 
