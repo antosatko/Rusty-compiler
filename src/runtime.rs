@@ -876,19 +876,24 @@ pub mod runtime_types {
     #[derive(Clone, Copy, Debug)]
     pub enum PointerTypes {
         /// set location on stack
+        /// 
         /// never expires
         Stack,
         /// heap pointer in "broken state"
         /// needs to be transformed into heap pointer
+        /// 
         /// never expires
         HeapReg,
         /// location on heap
+        /// 
         /// may expire at any time
         Heap,
     }
+    /// complete list of runtime instructions
     #[allow(unused)]
     #[derive(Clone, Copy, Debug)]
     pub enum Instructions {
+        /// debug reg        | prints value of reg(<reg>)
         Debug(usize),
         /// write            | moves value from reg(0) to stack(stack_end - <stack_offset>)
         Wr(usize),
@@ -908,7 +913,7 @@ pub mod runtime_types {
         Repp(usize),
         /// allocate         | reserves <size> on heap and stores location in registers(<reg>)
         Alc(usize, usize),
-        /// de-allocate      | frees heap(<reg>)
+        /// deallocate       | frees heap(<reg>)
         Dalc(usize),
         /// allocate resize  | resizes heap(<reg>) for <size>; additional space is filled with null
         RAlc(usize, usize),
