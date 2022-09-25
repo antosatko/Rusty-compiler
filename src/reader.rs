@@ -20,9 +20,7 @@ pub mod reader {
         while reader.file.as_bytes()[reader.pos] != '?' as u8 {
             reader.push_instruction();
         }
-        println!("{:?}", reader.ctx.stack);
         reader.ctx.code.push(Instructions::End);
-        println!("{:?}", reader.ctx.code);
         reader.ctx
     }
     impl Reader {
