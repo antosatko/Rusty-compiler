@@ -7,15 +7,15 @@ pub mod compiler {
     ];
     pub fn compile_file(file: String, target: String) {
         let mut global = Dictionary::new();
-        // let mut tree: Vec = vec![];
+        //let mut tree: Vec = vec![];
     }
     pub fn validate_identifier(string: &str) -> bool {
-        if find_ws_rc(string) == string.len() {
+        if find_ws_str(string, RESERVED_CHARS) == string.len() {
             if match_keyword(string) == Keywords::Value {
-                return true;
+                return true
             }
             // syntax err: keyword names are reserved
-            return false;
+            return false
         }
         // syntax err: identifier contains reserved character
         false
@@ -33,25 +33,25 @@ pub mod compiler {
     }
     pub fn match_keyword(string: &str) -> Keywords {
         match string {
-            "if" => Keywords::If,
-            "switch" => Keywords::Switch,
-            "let" => Keywords::Let,
-            "const" => Keywords::Const,
-            "fun" => Keywords::Function,
-            "struct" => Keywords::Struct,
-            "enum" => Keywords::Enum,
-            "loop" => Keywords::Loop,
-            "for" => Keywords::For,
-            "while" => Keywords::While,
-            "do" => Keywords::DoWhile,
-            "return" => Keywords::Return,
-            "break" => Keywords::Break,
-            "continue" => Keywords::Continue,
-            "lib" => Keywords::Lib,
-            "use" => Keywords::Use,
-            "//" => Keywords::CommentLine,
-            "/*" => Keywords::CommentBlock,
-            _ => Keywords::Value,
+            "if"        => Keywords::If,            
+            "switch"    => Keywords::Switch,        
+            "let"       => Keywords::Let,           
+            "const"     => Keywords::Const,         
+            "fun"       => Keywords::Function,      
+            "struct"    => Keywords::Struct,        
+            "enum"      => Keywords::Enum,          
+            "loop"      => Keywords::Loop,          
+            "for"       => Keywords::For,           
+            "while"     => Keywords::While,         
+            "do"        => Keywords::DoWhile,       
+            "return"    => Keywords::Return,        
+            "break"     => Keywords::Break,         
+            "continue"  => Keywords::Continue,      
+            "lib"       => Keywords::Lib,           
+            "use"       => Keywords::Use,           
+            "//"        => Keywords::CommentLine,   
+            "/*"        => Keywords::CommentBlock,  
+            _           => Keywords::Value,         
         }
     }
     pub fn global_keyword(keyword: Keywords) -> bool {
@@ -67,20 +67,30 @@ pub mod compiler {
             _ => false,
         }
     }
-    pub fn find_ws_rc(expression: &str) -> usize {
-        fn compare(original: &mut usize, compared: Option<usize>) {
-            if let Some(compared) = compared {
-                if compared < *original {
-                    *original = compared
-                }
+    fn compare(original: &mut usize, compared: Option<usize>) {
+        if let Some(compared) = compared {
+            if compared < *original {
+                *original = compared
             }
         }
+    }
+    pub fn find_ws_str(expression: &str, str: &str) -> usize {
         let idx = {
             let mut lowest_idx = expression.len();
-            for _char in RESERVED_CHARS.chars() {
+            for _char in str.chars() {
                 compare(&mut lowest_idx, expression.find(_char));
             }
             compare(&mut lowest_idx, expression.find(char::is_whitespace));
+            lowest_idx
+        };
+        idx
+    }
+    pub fn find_str(expression: &str, str: &str) -> usize {
+        let idx = {
+            let mut lowest_idx = expression.len();
+            for _char in str.chars() {
+                compare(&mut lowest_idx, expression.find(_char));
+            }
             lowest_idx
         };
         idx
