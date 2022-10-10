@@ -1,59 +1,92 @@
-
-use std::env;
-mod canvas;
-/*use std::io::BufReader;
-use std::time::Instant;
-use strum::IntoEnumIterator;*/
-use strum_macros::EnumIter;
-mod words;
-//use words::*;
+use std::{env, fs::File, io::Read};
+//mod canvas;
 mod runtime;
+mod syntax;
 use runtime::*;
 use runtime_types::*;
 mod reader;
 use reader::reader::*;
+mod lexer;
 mod writer;
+mod token_refactor;
 
-
-#[derive(Debug, EnumIter)]
-enum Days {
-    Mon,
-    Tue,
-    Wed,
-    Thu,
-    Fri,
-    Sat,
-    Sun,
-}
-
+/// commands:
+/// - run
+/// - build
+/// - exe
+/// - help
 fn main() {
-    let path = match env::args().nth(1) {
+    let mut args = env::args();
+    let path = match args.nth(0) {
         Some(path) => path,
         None => panic!("Path not specified."),
     };
-    let mut ctx = read_file(path, Context::new());
-    /*let mut ctx = Context::new();
-    ctx.stack.push(Types::Int(0));
-    ctx.stack.push(Types::Int(1));
-    ctx.stack.push(Types::Usize(1));
-    ctx.code = vec![
-        Instructions::Res(2),
-        Instructions::Rd(1, 0),
-        Instructions::Rd(0, 1),
-        Instructions::Add,
-        Instructions::Wr(1),
-        Instructions::Debug(0),
-        Instructions::Rdc(2, 2),
-        Instructions::Alc(0, 2),
-        Instructions::Repp(0),
-        Instructions::Rd(1, 1),
-        Instructions::Debug(0),
-        Instructions::Wrp(0, 1),
-        Instructions::Goto(1),
-    ];*/
-    writer::writer::write(&ctx.code, &ctx.stack);
-    ctx.run();
+    let cmd = args.nth(0).unwrap();
+
+    if cmd == "exe" {
+        let file = match args.nth(0) {
+            Some(file) => file,
+            None => panic!("File not specified."),
+        };
+        let mut ctx = read_file(file, Context::new());
+        ctx.run();
+    }
+
+    if cmd == "run" {
+        let file = match args.nth(0) {
+            Some(file) => file,
+            None => panic!("File not specified."),
+        };
+        //let file_path = Path::new(&path).join("..").join(&file);
+        println!("Compilation for '{file}' starts.");
+        let mut string = String::new();
+        let mut file =
+            File::open(file).expect(&format!("File not found. ({})", path).to_owned());
+        file.read_to_string(&mut string).expect("neco se pokazilo");
+        println!("Running '{}'.", todo!());
+        todo!();
+    }
+
+    if cmd == "build" {
+        let file = match args.nth(0) {
+            Some(file) => file,
+            None => panic!("File not specified."),
+        };
+        //let file_path = Path::new(&path).join("..").join(&file);
+        println!("Compilation for '{file}' starts.");
+        let mut string = String::new();
+        let mut file =
+            File::open(file).expect(&format!("File not found. ({})", path).to_owned());
+        file.read_to_string(&mut string).expect("neco se pokazilo");
+        use lexer::compiler::*;
+        /*let idx = find("fun(dvacetz). .nevim nic");
+        println!("{:?}", match_keyword(&"fun(dvacetz). .nevim nic"[..idx]))*/
+        parse(string, String::new())
+    }
 }
+
+//let mut ctx = read_file(path, Context::new());
+/*let mut ctx = Context::new();
+ctx.stack.push(Types::Int(0));
+ctx.stack.push(Types::Int(1));
+ctx.stack.push(Types::Usize(1));
+ctx.code = vec![
+    Instructions::Res(2),
+    Instructions::Rd(1, 0),
+    Instructions::Rd(0, 1),
+    Instructions::Add,
+    Instructions::Wr(1),
+    Instructions::Debug(0),
+    Instructions::Rdc(2, 2),
+    Instructions::Alc(0, 2),
+    Instructions::Repp(0),
+    Instructions::Rd(1, 1),
+    Instructions::Debug(0),
+    Instructions::Wrp(0, 1),
+    Instructions::Goto(1),
+];*/
+//writer::writer::write(&ctx.code, &ctx.stack);
+//ctx.run();
 /// Memory:
 /// -stack
 ///     array of values
@@ -77,9 +110,9 @@ fn main() {
 ///     2: uvidim
 /// -value
 ///     Values::<Type>(value: Type): enum
-/// 
-/// 
-/// 
+///
+///
+///
 /// Instructions:
 /// wr stack_offset       |01| write          | moves value from reg(0) to stack(<stack_offset> + stack_end)
 /// rd stack_offset reg   |02| read           | loads value from stack(<stack_offset> + stack_end) to its reg(<reg>)
@@ -112,9 +145,9 @@ fn main() {
 /// repp reg              |29| Repair pointer | Repairs pointer in reg(<reg>)
 /// LESS                  |30| less than      | reg(0) is set to the result of operation: reg(0) < reg(1)
 /// Gotop reg             |31| goto pointer   | moves code pointer to reg(<reg>)
-/// 
-/// 
-/// 
+///
+///
+///
 /// Compilation rules:
 /// {
 ///     let a: int = expression
@@ -138,8 +171,8 @@ fn main() {
 ///         c: ['a', 30]
 ///     }
 /// }
-/// 
-/// 
+///
+///
 /// Excercise:
 /// fn my_func(danda: int) -> bool{
 ///     return true;
@@ -177,11 +210,14 @@ fn main() {
 /// brnc (pos1) (pos2)
 /// #pos1
 /// rdc 2 1
-/// add 
+/// add
 /// goto (if-statement-end)
 /// #pos2
 /// rd (danda2.stack_offset) 0
 /// sub
 /// #if-statement-end
 /// end
+///
+/// scan order:
+/// write all definitions, global vars, function headers and positions in source
 const a: f32 = 1.;

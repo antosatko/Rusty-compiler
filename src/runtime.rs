@@ -1,8 +1,6 @@
 pub mod runtime {
     use core::panic;
 
-    use crate::runtime::runtime_error;
-
     use super::runtime_error::*;
     use super::runtime_types::*;
 
@@ -10,10 +8,7 @@ pub mod runtime {
         pub fn new() -> Self {
             Self {
                 stack: vec![],
-                call_stack: vec![CallStack {
-                    end: 0,
-                    code_ptr: 0,
-                }],
+                call_stack: [CallStack {end:0, code_ptr:0}; 100],
                 registers: [Types::Null; 4],
                 code: vec![],
                 code_ptr: 0,
@@ -24,11 +19,11 @@ pub mod runtime {
                     len: 0,
                     dels: 0,
                 }],
+                stack_ptr: 0,
             }
         }
         pub fn run(&mut self) {
             while self.read_line() {}
-            //println!("{:?}", self.heap);
         }
         fn read_line(&mut self) -> bool {
             use Instructions::*;
@@ -106,8 +101,6 @@ pub mod runtime {
                     if let Types::Pointer(u_size, kind) = self.registers[reg] {
                         if let PointerTypes::HeapReg = kind {
                             if let Some((_, loc)) = self.heap_reg_idx(u_size) {
-                                //println!("{:?}", self.heap_registry);
-                                //println!("{loc}");
                                 self.registers[reg] = Types::Pointer(loc, PointerTypes::Heap);
                             }
                         }
@@ -181,17 +174,18 @@ pub mod runtime {
                     }
                 }
                 Ret => {
-                    self.code_ptr = self.call_stack[self.call_stack.len() - 1].code_ptr;
-                    self.call_stack.pop();
+                    self.code_ptr = self.call_stack[self.stack_ptr].code_ptr;
+                    self.stack_ptr -= 1;
                     self.next_line();
                 }
                 Res(size) => {
                     let end = self.stack_end() + size - 1;
-                    self.call_stack.push(CallStack {
+                    self.stack_ptr += 1;
+                    self.call_stack[self.stack_ptr] = CallStack {
                         end,
                         code_ptr: self.code_ptr,
-                    });
-                    if end > self.stack.len() {
+                    };
+                    if end > self.stack_ptr {
                         self.stack.resize(end + 1, Types::Null);
                     }
                     self.next_line();
@@ -725,7 +719,7 @@ pub mod runtime {
             return true;
         }
         fn stack_end(&self) -> usize {
-            self.call_stack[self.call_stack.len() - 1].end
+            self.call_stack[self.stack_ptr].end
         }
         fn next_line(&mut self) {
             self.code_ptr += 1;
@@ -844,7 +838,8 @@ pub mod runtime_types {
     /// context for a single thread of execution (may include multiple threads in future updates)
     pub struct Context {
         pub stack: Vec<Types>,
-        pub call_stack: Vec<CallStack>,
+        pub call_stack: [CallStack; 100],
+        pub stack_ptr: usize,
         pub registers: [Types; 4],
         pub code: Vec<Instructions>,
         pub code_ptr: usize,
@@ -957,6 +952,7 @@ pub mod runtime_types {
         End,
     }
     /// holds information of where to jump after function call ends
+    #[derive(Clone, Copy)]
     pub struct CallStack {
         pub end: usize,
         pub code_ptr: usize,
