@@ -1,8 +1,6 @@
 pub mod runtime {
     use core::panic;
 
-    use crate::runtime::runtime_error;
-
     use super::runtime_error::*;
     use super::runtime_types::*;
 

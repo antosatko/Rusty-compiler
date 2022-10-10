@@ -8,7 +8,7 @@ enum comparison {
 }
 
 fun compareNum(rand: int, guess: int): comparison {
-    return if guess == randNum {
+    yeet if guess == randNum {
         comparison.Equal
     }
     else if guess < randNum {
@@ -23,7 +23,7 @@ fun again(): bool {
     io.println("Play again? (y/n)");
     char? ans;
     io.getChar(&ans);
-    return ans == 'y'
+    yeet ans == 'y'
 }
 
 fun gameLoop() {

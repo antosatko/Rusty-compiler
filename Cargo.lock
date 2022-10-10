@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "danda_sharp"
+name = "rusty_danda"
 version = "0.1.0"

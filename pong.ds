@@ -82,10 +82,10 @@ struct Ball {
         self.x += self.xs * dt;
         self.y += self.ys * dt;
         if self.x + BALL_SIDE / 2 > SCREEN_WIDTH {
-            return -1;
+            yeet -1;
         }
         if self.x - BALL_SIDE / 2 < 0 {
-            return 1;
+            yeet 1;
         }
         if self.y + BALL_SIDE / 2 > SCREEN_HEIGHT {
             self.ys *= -1;

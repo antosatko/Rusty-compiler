@@ -1,12 +1,14 @@
-use std::{env, fs::File, io::Read, path::Path};
+use std::{env, fs::File, io::Read};
 //mod canvas;
 mod runtime;
+mod syntax;
 use runtime::*;
 use runtime_types::*;
 mod reader;
 use reader::reader::*;
-mod compiler;
+mod lexer;
 mod writer;
+mod token_refactor;
 
 /// commands:
 /// - run
@@ -14,14 +16,12 @@ mod writer;
 /// - exe
 /// - help
 fn main() {
-    use std::env;
     let mut args = env::args();
     let path = match args.nth(0) {
         Some(path) => path,
         None => panic!("Path not specified."),
     };
-    let mut cmd = args.nth(0).unwrap();
-    cmd = String::from("nevim nic");
+    let cmd = args.nth(0).unwrap();
 
     if cmd == "exe" {
         let file = match args.nth(0) {
@@ -58,15 +58,11 @@ fn main() {
         let mut file =
             File::open(file).expect(&format!("File not found. ({})", path).to_owned());
         file.read_to_string(&mut string).expect("neco se pokazilo");
-        println!("{string}");
-        todo!()
+        use lexer::compiler::*;
+        /*let idx = find("fun(dvacetz). .nevim nic");
+        println!("{:?}", match_keyword(&"fun(dvacetz). .nevim nic"[..idx]))*/
+        parse(string, String::new())
     }
-    use compiler::compiler::*;
-    /*let idx = find("fun(dvacetz). .nevim nic");
-    println!("{:?}", match_keyword(&"fun(dvacetz). .nevim nic"[..idx]))*/
-    let mut danda = String::from("      \n   /*komentar");
-    let key_idx = find_keyword(&mut danda).unwrap();
-    println!("{:?}", match_keyword(KEYWORDS[key_idx]))
 }
 
 //let mut ctx = read_file(path, Context::new());
