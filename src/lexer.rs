@@ -1,12 +1,18 @@
 pub mod compiler {
-    use std::collections::HashMap;
+    use std::{collections::HashMap, vec};
 
     use super::compiler_data::*;
-    use crate::{syntax::syntax::*, token_refactor::refactorer::refactor};
+    use crate::{
+        parser::syntax::*,
+        token_refactor::{
+            parseErr::{self, Errors},
+            refactorer::refactor,
+        },
+    };
     const RESERVED_CHARS: &str = " +-*/=%;:,.({<[]>})&|!?\"'\\";
     pub const KEYWORDS: [&str; 19] = [
-        "if", "switch", "let", "const", "fun", "struct", "trait", "enum", "loop", "for", "while", "do",
-        "yeet", "break", "continue", "lib", "use", "//", "/*",
+        "if", "switch", "let", "const", "fun", "struct", "trait", "enum", "loop", "for", "while",
+        "do", "yeet", "break", "continue", "lib", "use", "//", "/*",
     ];
     pub const GLOBALS: [Keywords; 9] = [
         Keywords::Lib,
@@ -19,46 +25,71 @@ pub mod compiler {
         Keywords::CommentLine,
         Keywords::CommentBlock,
     ];
-    pub const VALUE_HOLDERS: [Keywords; 3] = [
-        Keywords::If,
-        Keywords::Loop,
-        Keywords::Switch,
-    ];
+    pub const VALUE_HOLDERS: [Keywords; 3] = [Keywords::If, Keywords::Loop, Keywords::Switch];
     pub fn parse(file: String, target: String) {
         let mut tokens: Vec<Tokens> = vec![];
+        let mut text_pos: Vec<(usize, usize)> = vec![(0, 0)];
+        let mut errors: Vec<parseErr::Errors> = vec![];
 
         let mut i = 0;
         while i < file.len() {
             let res = get_token(&file[i..]);
-            if i % 100 < 6 {
-                println!("{i}");
+            //println!("{:?}", res.0);
+            text_pos.push((
+                text_pos[text_pos.len() - 1].0 + res.1,
+                text_pos[text_pos.len() - 1].1,
+            ));
+            if let Tokens::Text(txt) = &res.0 {
+                if txt == "\n" {
+                    let len = text_pos.len() - 1;
+                    text_pos[len].1 += 1;
+                    text_pos[len].0 = 0;
+                }
             }
             tokens.push(res.0);
             i += res.1;
         }
+        //println!("{:?}", text_pos);
         println!("Total len: {}", tokens.len());
-        if let Ok(refactored) = refactor(tokens) {
+        if let Ok(refactored) = refactor(tokens, &mut text_pos, &mut errors) {
             tokens = refactored;
-            /*for token in &tokens {
+            for token in &tokens {
                 println!("{:?}", token);
-            }*/
+            }
             println!("Total len: {}", tokens.len());
-        }else {
+        } else {
             println!("neco se pokazilo")
+        }
+        for err in errors {
+            match err {
+                Errors::InvalidNumber(line, str) => {
+                    println!(
+                        "Error at line: {}, col: {}. Invalid number: {str}",
+                        line.0, line.1
+                    )
+                }
+                _ => {}
+            }
         }
     }
     pub fn get_token(line: &str) -> (Tokens, usize) {
+        let len = find_ws_str(line, &RESERVED_CHARS);
+        let len = if len == 0 { 1 } else { len };
+        let str = &line[0..len];
+        let token = parse_token(&str);
         if let Some(idx) = find_keyword(&line) {
             // keyword
-            (Tokens::Keyword(parse_keyword(&KEYWORDS[idx])), KEYWORDS[idx].len())
-        }else {
-            // expression
-            let len = find_ws_str(line, &RESERVED_CHARS);
-            let len = if len == 0 {1} else {len};
-            let str = &line[0..len];
-            let token = parse_token(&str);
-            (token, str.len())
-        }
+            if KEYWORDS[idx].len() == str.len() {
+                return (
+                    Tokens::Keyword(parse_keyword(&KEYWORDS[idx])),
+                    KEYWORDS[idx].len(),
+                );
+            }
+        } else {
+            // other
+            return (token, str.len());
+        };
+        return (token, str.len());
     }
     /// returns index of found keyword in const KEYWORDS
     pub fn find_keyword(string: &str) -> Option<usize> {
@@ -73,57 +104,116 @@ pub mod compiler {
     }
     pub fn parse_keyword(string: &str) -> Keywords {
         match string {
-            "if"        => Keywords::If,
-            "switch"    => Keywords::Switch,
-            "let"       => Keywords::Let,
-            "const"     => Keywords::Const,
-            "fun"       => Keywords::Function,
-            "struct"    => Keywords::Struct,
-            "trait"     => Keywords::Trait,
-            "enum"      => Keywords::Enum,
-            "loop"      => Keywords::Loop,
-            "for"       => Keywords::For,
-            "while"     => Keywords::While,
-            "do"        => Keywords::DoWhile,
-            "yeet"      => Keywords::Return,
-            "break"     => Keywords::Break,
-            "continue"  => Keywords::Continue,
-            "lib"       => Keywords::Lib,
-            "use"       => Keywords::Use,
-            "//"        => Keywords::CommentLine,
-            "/*"        => Keywords::CommentBlock,
-            _           => Keywords::Value,
+            "if" => Keywords::If,
+            "switch" => Keywords::Switch,
+            "let" => Keywords::Let,
+            "const" => Keywords::Const,
+            "fun" => Keywords::Function,
+            "struct" => Keywords::Struct,
+            "trait" => Keywords::Trait,
+            "enum" => Keywords::Enum,
+            "loop" => Keywords::Loop,
+            "for" => Keywords::For,
+            "while" => Keywords::While,
+            "do" => Keywords::DoWhile,
+            "yeet" => Keywords::Return,
+            "break" => Keywords::Break,
+            "continue" => Keywords::Continue,
+            "lib" => Keywords::Lib,
+            "use" => Keywords::Use,
+            "//" => Keywords::CommentLine,
+            "/*" => Keywords::CommentBlock,
+            _ => Keywords::Value,
+        }
+    }
+    pub fn deparse_keyword(keyword: &Keywords) -> String {
+        match keyword {
+            Keywords::If => "if".to_string(),
+            Keywords::Switch => "switch".to_string(),
+            Keywords::Let => "let".to_string(),
+            Keywords::Const => "const".to_string(),
+            Keywords::Function => "fun".to_string(),
+            Keywords::Struct => "struct".to_string(),
+            Keywords::Trait => "trait".to_string(),
+            Keywords::Enum => "enum".to_string(),
+            Keywords::Loop => "loop".to_string(),
+            Keywords::For => "for".to_string(),
+            Keywords::While => "while".to_string(),
+            Keywords::DoWhile => "do".to_string(),
+            Keywords::Return => "yeet".to_string(),
+            Keywords::Break => "break".to_string(),
+            Keywords::Continue => "continue".to_string(),
+            Keywords::Lib => "lib".to_string(),
+            Keywords::Use => "use".to_string(),
+            Keywords::CommentLine => "//".to_string(),
+            Keywords::CommentBlock => "/*".to_string(),
+            Keywords::Value => "".to_string(),
         }
     }
     pub fn parse_token(string: &str) -> Tokens {
         // +-*/=%;:,.({<[]>})&|!?"'\
         match string {
-            "+"     => Tokens::Operator(Operators::Add),
-            "-"     => Tokens::Operator(Operators::Sub),
-            "*"     => Tokens::Operator(Operators::Mul),
-            "/"     => Tokens::Operator(Operators::Div),
-            "="     => Tokens::Operator(Operators::Equal),
-            "%"     => Tokens::Operator(Operators::Mod),
-            "&"     => Tokens::Operator(Operators::And),
-            "|"     => Tokens::Operator(Operators::Or),
-            "!"     => Tokens::Operator(Operators::Not),
-            "?"     => Tokens::Optional,
-            ";"     => Tokens::Semicolon,
-            ":"     => Tokens::Colon,
-            ","     => Tokens::Comma,
-            "."     => Tokens::Dot,
-            "\""    => Tokens::DoubleQuotes,
-            r"'"    => Tokens::Quotes,
-            "("     => Tokens::Parenteses(false),
-            ")"     => Tokens::Parenteses(true),
-            "{"     => Tokens::CurlyBracket(false),
-            "}"     => Tokens::CurlyBracket(true),
-            "<"     => Tokens::AngleBracket(false),
-            ">"     => Tokens::AngleBracket(true),
-            "["     => Tokens::SquareBracket(false),
-            "]"     => Tokens::SquareBracket(true),
-            " "     => Tokens::Space,
-            _       => Tokens::Text(string.to_string())
+            "+" => Tokens::Operator(Operators::Add),
+            "-" => Tokens::Operator(Operators::Sub),
+            "*" => Tokens::Operator(Operators::Mul),
+            "/" => Tokens::Operator(Operators::Div),
+            "=" => Tokens::Operator(Operators::Equal),
+            "%" => Tokens::Operator(Operators::Mod),
+            "&" => Tokens::Operator(Operators::And),
+            "|" => Tokens::Operator(Operators::Or),
+            "!" => Tokens::Operator(Operators::Not),
+            "?" => Tokens::Optional,
+            ";" => Tokens::Semicolon,
+            ":" => Tokens::Colon,
+            "," => Tokens::Comma,
+            "." => Tokens::Dot,
+            "\"" => Tokens::DoubleQuotes,
+            r"'" => Tokens::Quotes,
+            "(" => Tokens::Parenteses(false),
+            ")" => Tokens::Parenteses(true),
+            "{" => Tokens::CurlyBracket(false),
+            "}" => Tokens::CurlyBracket(true),
+            "<" => Tokens::AngleBracket(false),
+            ">" => Tokens::AngleBracket(true),
+            "[" => Tokens::SquareBracket(false),
+            "]" => Tokens::SquareBracket(true),
+            " " => Tokens::Space,
+            _ => Tokens::Text(string.to_string()),
+        }
+    }
+    pub fn deparse_token(token: &Tokens) -> String {
+        // +-*/=%;:,.({<[]>})&|!?"'\
+        match token {
+            Tokens::Operator(Operators::Add) => "+".to_string(),
+            Tokens::Operator(Operators::Sub) => "-".to_string(),
+            Tokens::Operator(Operators::Mul) => "*".to_string(),
+            Tokens::Operator(Operators::Div) => "/".to_string(),
+            Tokens::Operator(Operators::Equal) => "=".to_string(),
+            Tokens::Operator(Operators::Mod) => "%".to_string(),
+            Tokens::Operator(Operators::And) => "&".to_string(),
+            Tokens::Operator(Operators::Or) => "|".to_string(),
+            Tokens::Operator(Operators::Not) => "!".to_string(),
+            Tokens::Optional => "?".to_string(),
+            Tokens::Semicolon => ";".to_string(),
+            Tokens::Colon => ":".to_string(),
+            Tokens::Comma => ",".to_string(),
+            Tokens::Dot => ".".to_string(),
+            Tokens::DoubleQuotes => "\"".to_string(),
+            Tokens::Quotes => r"'".to_string(),
+            Tokens::Parenteses(false) => "(".to_string(),
+            Tokens::Parenteses(true) => ")".to_string(),
+            Tokens::CurlyBracket(false) => "{".to_string(),
+            Tokens::CurlyBracket(true) => "}".to_string(),
+            Tokens::AngleBracket(false) => "<".to_string(),
+            Tokens::AngleBracket(true) => ">".to_string(),
+            Tokens::SquareBracket(false) => "[".to_string(),
+            Tokens::SquareBracket(true) => "]".to_string(),
+            Tokens::Space => " ".to_string(),
+            Tokens::Text(string) => string.to_string(),
+            Tokens::DoubleColon => "::".to_string(),
+            Tokens::Keyword(kw) => deparse_keyword(kw),
+            Tokens::Number(int, float, suffix) => todo!(),
+            _ => "".to_string(),
         }
     }
     fn compare(original: &mut usize, compared: Option<usize>) {
@@ -253,8 +343,6 @@ pub mod compiler_data {
         /// content
         String(String),
         Char(char),
-        Number(u128),
-        Float(f64),
         /// variable name
         Identifier(String),
         Keyword(Keywords),
@@ -262,6 +350,7 @@ pub mod compiler_data {
         /// in case we can not identify token at the moment
         Text(String),
         DoubleColon,
+        Number(usize, usize, char),
     }
     #[derive(Debug, PartialEq, Clone, Copy)]
     pub enum Operators {
@@ -308,13 +397,19 @@ pub mod compiler_data {
         If,
         /// value
         /// {
-        /// value || "_" ?
+        /// value ?
+        ///     code_block
+        ///     <<
+        /// "_" ?
         ///     code_block
         ///     <<
         /// }
         Switch,
 
         /// identifier
+        ///     , ?
+        ///         identifier
+        ///         <<
         ///     : ?
         ///         type
         /// = ?

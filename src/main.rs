@@ -1,13 +1,14 @@
 use std::{env, fs::File, io::Read};
 //mod canvas;
 mod runtime;
-mod syntax;
+mod parser;
 use runtime::*;
 use runtime_types::*;
 mod reader;
 use reader::reader::*;
 mod lexer;
 mod writer;
+mod compile_err;
 mod token_refactor;
 
 /// commands:
