@@ -1,9 +1,9 @@
 pub mod writer {
     use crate::runtime::runtime_types::{Instructions, Types};
-    pub fn write(code: &Vec<Instructions>, consts: &Vec<Types>) {
+    pub fn write(code: &Vec<Instructions>, consts: &Vec<Types>, file_name: &str) {
         use std::fs::File;
         use std::io::prelude::*;
-        let mut file = File::create("target.dasm").expect("nevim");
+        let mut file = File::create(file_name).expect("nevim");
         file.write_all(to_string(code, consts).as_bytes())
             .expect("furt nevim");
     }

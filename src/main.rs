@@ -76,7 +76,7 @@ fn main() {
                 Int(100),
                 Int(100),
                 Bool(true),
-                Int(5000000),
+                Int(50000),
                 Int(1),
             ];
             // for loop written in dasm
@@ -98,6 +98,13 @@ fn main() {
                 Debug(0),
                 End,
             ];
+            match args.nth(0) {
+                Some(file) => writer::writer::write(&ctx.code, &ctx.stack, &file),
+                None => {
+                    println!("file not specified");
+                    println!("program will be executed.");
+                }
+            };
             let build_time = SystemTime::now();
             ctx.run();
             let finish_time = SystemTime::now();
@@ -107,7 +114,7 @@ fn main() {
         }
         _ => {
             println!("Unknown command: {}", cmd);
-            println!("Try help");
+            println!("Try help.");
         }
     }
 }
