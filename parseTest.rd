@@ -1,3 +1,4 @@
+io.print("this is a common example of parsing") + "a single value".append(" of unknown type.");
 /*
     This is my playground where I test new compiler features
 */

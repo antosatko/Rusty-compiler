@@ -57,6 +57,8 @@ pub mod compiler {
                 println!("{:?}", token);
             }
             println!("Total len: {}", tokens.len());
+            let block = crate::parser::syntax::get_token_block(Kinds::Value, &mut tokens).unwrap();
+            println!("{:?}", block);
         } else {
             println!("neco se pokazilo")
         }
@@ -320,7 +322,7 @@ pub mod compiler_data {
         Struct(String),
     }
     /// "+-*/=%;:,.({<[]>})&|!?\"'\\"
-    #[derive(Debug, PartialEq, Clone)]
+    #[derive(Debug, PartialEq, Clone, Eq)]
     pub enum Tokens {
         /// opening 0, closing 1
         Parenteses(bool),
@@ -352,7 +354,7 @@ pub mod compiler_data {
         DoubleColon,
         Number(usize, usize, char),
     }
-    #[derive(Debug, PartialEq, Clone, Copy)]
+    #[derive(Debug, PartialEq, Clone, Copy, Eq)]
     pub enum Operators {
         Add,
         Sub,
@@ -384,7 +386,7 @@ pub mod compiler_data {
     ///     Enum
     ///     CommentLine
     ///     CommentBlock
-    #[derive(Debug, PartialEq, Clone, Copy)]
+    #[derive(Debug, PartialEq, Clone, Copy, Eq)]
     pub enum Keywords {
         /// value
         /// code_block
@@ -402,7 +404,7 @@ pub mod compiler_data {
         ///     <<
         /// "_" ?
         ///     code_block
-        ///     <<
+        ///     <<<
         /// }
         Switch,
 
