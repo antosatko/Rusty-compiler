@@ -38,18 +38,18 @@ pub mod runtime {
                     self.registers[reg] = self.stack[end - stack_offset];
                     self.next_line();
                 }
-                Wrp(reg1, reg2) => {
-                    if let Types::Pointer(u_size, kind) = self.registers[reg1] {
+                Wrp(pointer_reg, value_reg) => {
+                    if let Types::Pointer(u_size, kind) = self.registers[pointer_reg] {
                         match kind {
                             PointerTypes::Stack => {
-                                self.stack[u_size] = self.registers[reg2];
+                                self.stack[u_size] = self.registers[value_reg];
                             }
                             PointerTypes::Heap => {
-                                self.heap[u_size] = self.registers[reg2];
+                                self.heap[u_size] = self.registers[value_reg];
                             }
                             PointerTypes::HeapReg => {
                                 if let Some((_, heap_pos)) = self.heap_reg_idx(u_size) {
-                                    self.heap[heap_pos] = self.registers[reg2];
+                                    self.heap[heap_pos] = self.registers[value_reg];
                                     // should never be used, but I will include it just in case
                                 } else {
                                     panic!("Somehow you just managed to use broken pointer on feature, that shouldnt even exist. wow")
@@ -61,28 +61,27 @@ pub mod runtime {
                     }
                     self.next_line();
                 }
-                Rdp(reg1, reg2) => {
-                    if let Types::Pointer(u_size, kind) = self.registers[reg2] {
+                Rdp(cash_reg, pointer_reg) => {
+                    if let Types::Pointer(u_size, kind) = self.registers[pointer_reg] {
                         match kind {
                             PointerTypes::Stack => {
-                                self.registers[reg1] = self.stack[u_size];
+                                self.registers[cash_reg] = self.stack[u_size];
                             }
                             PointerTypes::Heap => {
-                                self.registers[reg1] = self.heap[u_size];
+                                self.registers[cash_reg] = self.heap[u_size];
                             }
                             PointerTypes::HeapReg => {
                                 if let Some((_, heap_pos)) = self.heap_reg_idx(u_size) {
-                                    self.registers[reg2] = self.heap[heap_pos];
+                                    self.registers[pointer_reg] = self.heap[heap_pos];
                                     // should never be used, but I will include it just in case
                                 } else {
                                     panic!("Somehow you just managed to use broken pointer on feature, that shouldnt even exist. wow")
                                 }
-                                todo!()
                             }
                         }
                     } else {
                         return panic_rt(ErrTypes::InvalidType(
-                            self.registers[reg2],
+                            self.registers[pointer_reg],
                             String::from("Pointer"),
                         ));
                     }
@@ -107,17 +106,17 @@ pub mod runtime {
                     }
                     self.next_line();
                 }
-                Idx(reg1, reg2) => {
-                    if let Types::Pointer(u_size, kind) = self.registers[reg1] {
+                Idx(pointer_reg, increment_by_reg) => {
+                    if let Types::Pointer(u_size, kind) = self.registers[pointer_reg] {
                         if let PointerTypes::HeapReg = kind {
                             if let Some((_, loc)) = self.heap_reg_idx(u_size) {
-                                if let Types::Pointer(u_size2, kind2) = self.registers[reg2] {
-                                    self.registers[reg1] = Types::Pointer(loc + u_size2, kind2);
+                                if let Types::Usize(size) = self.registers[increment_by_reg] {
+                                    self.registers[pointer_reg] = Types::Pointer(loc + size, PointerTypes::Heap);
                                 }
                             }
                         } else {
-                            if let Types::Pointer(u_size2, kind2) = self.registers[reg2] {
-                                self.registers[reg1] = Types::Pointer(u_size + u_size2, kind2);
+                            if let Types::Pointer(u_size2, kind2) = self.registers[increment_by_reg] {
+                                self.registers[pointer_reg] = Types::Pointer(u_size + u_size2, kind2);
                             }
                         }
                     }
@@ -136,9 +135,9 @@ pub mod runtime {
                     }
                     self.next_line();
                 }
-                RAlc(reg, size) => {
-                    if let Types::Pointer(u_size, _) = self.registers[reg] {
-                        if let Types::Usize(new_size) = self.registers[size] {
+                RAlc(pointer_reg, size_reg) => {
+                    if let Types::Pointer(u_size, _) = self.registers[pointer_reg] {
+                        if let Types::Usize(new_size) = self.registers[size_reg] {
                             if let Some((idx, loc)) = self.heap_reg_idx(u_size) {
                                 while new_size > self.heap_registry[idx].len {
                                     self.heap

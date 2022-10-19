@@ -4,7 +4,7 @@ pub mod refactorer {
         compiler_data::{Keywords, Operators, Tokens},
     };
 
-    use super::parseErr::Errors;
+    use super::parse_err::Errors;
     pub fn refactor(
         mut tokens: Vec<Tokens>,
         lines: &mut Vec<(usize, usize)>,
@@ -216,7 +216,7 @@ pub mod refactorer {
     pub enum LexingErr {}
 }
 
-pub mod parseErr {
+pub mod parse_err {
     use crate::lexer::compiler_data::Tokens;
 
     pub enum Errors {

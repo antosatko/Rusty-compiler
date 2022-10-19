@@ -1,11 +1,9 @@
 pub mod compiler {
-    use std::{collections::HashMap, vec};
-
     use super::compiler_data::*;
     use crate::{
         parser::syntax::*,
         token_refactor::{
-            parseErr::{self, Errors},
+            parse_err::{self, Errors},
             refactorer::refactor,
         },
     };
@@ -29,7 +27,7 @@ pub mod compiler {
     pub fn parse(file: String, target: String) {
         let mut tokens: Vec<Tokens> = vec![];
         let mut text_pos: Vec<(usize, usize)> = vec![(0, 0)];
-        let mut errors: Vec<parseErr::Errors> = vec![];
+        let mut errors: Vec<parse_err::Errors> = vec![];
 
         let mut i = 0;
         while i < file.len() {
@@ -57,7 +55,7 @@ pub mod compiler {
                 println!("{:?}", token);
             }
             println!("Total len: {}", tokens.len());
-            let block = crate::parser::syntax::get_token_block(Kinds::Value, &mut tokens).unwrap();
+            let block = crate::parser::syntax::get_token_block(Kinds::Value(vec![Tokens::Semicolon]), &mut tokens).unwrap();
             println!("{:?}", block);
         } else {
             println!("neco se pokazilo")
@@ -214,7 +212,7 @@ pub mod compiler {
             Tokens::Text(string) => string.to_string(),
             Tokens::DoubleColon => "::".to_string(),
             Tokens::Keyword(kw) => deparse_keyword(kw),
-            Tokens::Number(int, float, suffix) => todo!(),
+            Tokens::Number(_, _, _) => todo!(),
             _ => "".to_string(),
         }
     }

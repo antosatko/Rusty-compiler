@@ -6,10 +6,12 @@ use runtime::*;
 use runtime_types::*;
 mod reader;
 use reader::reader::*;
-mod compile_err;
+
+use crate::test::test::test_init;
 mod lexer;
 mod token_refactor;
 mod writer;
+mod test;
 
 /// commands:
 /// - run
@@ -61,56 +63,33 @@ fn main() {
             let mut file =
                 File::open(file).expect(&format!("File not found. ({})", path).to_owned());
             file.read_to_string(&mut string).expect("neco se pokazilo");
-            println!("Running '{}'.", todo!());
             todo!();
         }
         "test" => {
-            use std::thread::sleep;
-            use std::time::{Duration, SystemTime};
+            use std::time::SystemTime;
             let start_time = SystemTime::now();
             let mut ctx = Context::new();
-            use Instructions::*;
-            use Types::*;
-            ctx.stack = vec![
-                // initialization of values on stack
-                Int(100),
-                Int(100),
-                Bool(true),
-                Int(50000),
-                Int(1),
-            ];
-            // for loop written in dasm
-            ctx.code = vec![
-                // reserves memory on stack and initializes values
-                Res(5),
-                // reads values from stack
-                Rd(4, 0),
-                Rd(0, 1),
-                // writes result of their addition
-                Add,
-                Wr(4),
-                // repeats if number is less than stack(1)
-                Rd(1, 1),
-                Less,
-                Brnc(1, 8),
-                // prints end result
-                Rd(4, 0),
-                Debug(0),
-                End,
-            ];
+            test_init(None, &mut ctx);
             match args.nth(0) {
                 Some(file) => writer::writer::write(&ctx.code, &ctx.stack, &file),
                 None => {
                     println!("file not specified");
-                    println!("program will be executed.");
                 }
             };
             let build_time = SystemTime::now();
             ctx.run();
             let finish_time = SystemTime::now();
-            println!("Process ended.");
-            println!("Total build time: {} ms", build_time.duration_since(start_time).unwrap().as_millis());
+            println!("\nProcess ended.");
+            println!("Total start time: {} ms", build_time.duration_since(start_time).unwrap().as_millis());
             println!("Total run time: {} ms", finish_time.duration_since(build_time).unwrap().as_millis());
+            if let Types::Usize(num) = ctx.registers[0] {
+                if num == 1 {
+                    println!("\nYou have triggered post-process data report.");
+                    println!("If this is an accident, please do not load Usize(1) to first register at the end of execution.");
+                    println!("Heap: {:?}", ctx.heap);
+                    println!("stack: {:?}", ctx.stack);
+                }
+            }
         }
         _ => {
             println!("Unknown command: {}", cmd);
