@@ -124,6 +124,10 @@ pub mod test {
                     // read from it using the already constructed index and printing value
                     Rdp(0, 1),
                     Debug(0),
+                    // freeing allocated memory
+                    Rd(1, 0),
+                    Debug(0),
+                    Dalc(0),
                     // trigger post-process data report
                     Rd(3, 0),
                     End,

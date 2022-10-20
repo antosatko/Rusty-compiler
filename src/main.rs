@@ -88,6 +88,8 @@ fn main() {
                     println!("If this is an accident, please do not load Usize(1) to first register at the end of execution.");
                     println!("Heap: {:?}", ctx.heap);
                     println!("stack: {:?}", ctx.stack);
+                    println!("registers: {:?}", ctx.registers);
+                    println!("heap_reg: {:?}", ctx.heap_registry);
                 }
             }
         }

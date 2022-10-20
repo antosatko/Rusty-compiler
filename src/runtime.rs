@@ -25,6 +25,14 @@ pub mod runtime {
         pub fn run(&mut self) {
             while self.read_line() {}
         }
+        pub fn run_for(&mut self, lenght: usize) -> bool {
+            for _ in 0..lenght {
+                if !self.read_line(){
+                    return true
+                }
+            }
+            return false
+        }
         fn read_line(&mut self) -> bool {
             use Instructions::*;
             match self.code[self.code_ptr] {
@@ -130,8 +138,18 @@ pub mod runtime {
                     self.next_line();
                 }
                 Dalc(reg) => {
-                    if let Types::Pointer(u_size, _) = self.registers[reg] {
-                        self.heap_reg_del(u_size);
+                    if let Types::Pointer(u_size, pointer_type) = self.registers[reg] {
+                        match pointer_type {
+                            PointerTypes::Heap => {
+                                // runtime err: only raw pointers can be deleted
+                            }
+                            PointerTypes::HeapReg => {
+                                self.heap_reg_del(u_size);
+                            }
+                            PointerTypes::Stack => {
+                                // runtime err: can not delete stack pointer
+                            }
+                        }
                     }
                     self.next_line();
                 }
@@ -733,8 +751,8 @@ pub mod runtime {
             };
         }
         fn heap_reg_del(&mut self, idx: usize) {
-            if let Some((index, loc)) = self.heap_reg_idx(idx) {
-                let heap_range = loc..self.heap_registry[index].len;
+            if let Some((index, heap_loc)) = self.heap_reg_idx(idx) {
+                let heap_range = heap_loc..self.heap_registry[index].len + heap_loc;
                 self.heap.drain(heap_range);
                 if let Some(prev) = self.heap_registry[index].prev {
                     self.heap_registry[prev].next = self.heap_registry[index].next;
@@ -763,14 +781,13 @@ pub mod runtime {
             let mut i = 0;
             while i < idx {
                 if let Some(next) = self.heap_registry[hr_path.0].next {
-                    hr_path.0 = next;
                     hr_path.1 += self.heap_registry[hr_path.0].len;
+                    hr_path.0 = next;
                 } else {
                     return None;
                 }
                 i += self.heap_registry[hr_path.0].dels + 1;
             }
-            hr_path.1 -= 1;
             Some(hr_path)
         }
         fn heap_reg_push(&mut self, len: usize) {
@@ -846,6 +863,7 @@ pub mod runtime_types {
         pub heap_registry: Vec<HeapRegistry>,
     }
     /// a structure used to register data on heap
+    #[derive(Clone, Copy, Debug)]
     pub struct HeapRegistry {
         pub prev: Option<usize>,
         pub next: Option<usize>,
@@ -864,12 +882,11 @@ pub mod runtime_types {
         Pointer(usize, PointerTypes),
         CodePointer(usize),
         Null,
-        Enum(u8),
     }
     /// runtime 
     #[derive(Clone, Copy, Debug)]
     pub enum PointerTypes {
-        /// set location on stack
+        /// location on stack
         /// 
         /// never expires
         Stack,
@@ -889,39 +906,39 @@ pub mod runtime_types {
     pub enum Instructions {
         /// debug reg        | prints value of reg(<reg>)
         Debug(usize),
-        /// write            | moves value from reg(0) to stack(stack_end - <stack_offset>)
+        /// write stack_offset           | moves value from reg(0) to stack(stack_end - <stack_offset>)
         Wr(usize),
-        /// read             | loads value from stack(stack_end - <stack_offset>) to its reg(<reg>)
+        /// read stack_offset reg | reads value from stack(stack_end - <stack_offset>) to its reg(<reg>)
         Rd(usize, usize),
         /// write pointer    | moves value from reg(<reg2>) to stack(<reg1>)
         Wrp(usize, usize),
-        /// read pointer     | loads value from stack(reg1) to its reg(<reg2>)
+        /// read_pointer pointer_reg reg | reads value from stack(reg1) to its reg(<reg2>)
         Rdp(usize, usize),
-        /// read constant    | loads value from stack(<stack_pos>) to its reg(<reg>)
+        /// read constant    | reads value from stack(<stack_pos>) to its reg(<reg>)
         Rdc(usize, usize),
-        /// pointer          | stores pointer to stack(stack_end - <stack_offset>) in reg(0)
+        /// pointer stack_pos | stores pointer to stack(stack_end - <stack_offset>) in reg(0)
         Ptr(usize),
-        /// Index            | gets pointer from reg(<reg1>) repairs it and adds reg(<reg2>)
+        /// Index pointer idx<usize> | gets pointer from reg(<reg1>) repairs it and adds reg(<reg2>)
         Idx(usize, usize),
         /// Repair pointer   | Repairs pointer in reg(<reg>)
         Repp(usize),
-        /// allocate         | reserves <size> on heap and stores location in registers(<reg>)
+        /// allocate pointer size_reg | reserves <size> on heap and stores location in registers(<reg>)
         Alc(usize, usize),
-        /// deallocate       | frees heap(<reg>)
+        /// deallocate pointer | frees heap(<reg>)
         Dalc(usize),
-        /// allocate resize  | resizes heap(<reg>) for <size>; additional space is filled with null
+        /// reallocate pointer size_reg | resizes heap(<reg>) for <size>; additional space is filled with null
         RAlc(usize, usize),
-        /// go to            | moves code_pointer to <pos>
+        /// goto pos         | moves code_pointer to <pos>
         Goto(usize),
-        /// goto pointer     | moves code pointer to reg(<reg>)
+        /// goto pos_reg     | moves code pointer to reg(<reg>)
         Gotop(usize),
-        /// branch           | if reg(0), goto <pos1> else goto <pos2>
+        /// branch pos1 pos2 | if reg(0), goto <pos1> else goto <pos2>
         Brnc(usize, usize),
-        /// return           | moves code_pointer to the last position in stack
+        /// return           | moves code_pointer to the last position in stack retrieved from stack
         Ret,
-        /// reserve          | reserves <size> on stack and saves current reg(0)
+        /// reserve size     | reserves <size> on stack and saves current reg(0)
         Res(usize),
-        /// move             | moves value of <reg1> to <reg2>
+        /// move reg1 reg2   | moves value of <reg1> to <reg2>
         Mov(usize, usize),
         /// add              | reg(0) is set to the result of operation: reg(0) + reg(1)
         Add,

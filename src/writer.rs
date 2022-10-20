@@ -66,7 +66,7 @@ pub mod writer {
             }
             Pointer(_, _) => String::new(),
             Null => format!("{}", 71 as char),
-            Enum(offset) => format!("{}{offset:2x}", 72 as char).replace(" ", "0"),
+            //Enum(offset) => format!("{}{offset:2x}", 72 as char).replace(" ", "0"),
             CodePointer(u_size) => format!("{}{u_size:32x}", 73 as char).replace(" ", "0"),
         }
     }

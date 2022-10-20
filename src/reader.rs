@@ -58,7 +58,7 @@ pub mod reader {
                     self.ctx.stack.push(Types::Char('\0'));
                     return;
                 }
-                72 => Types::Enum(self.read_unumber(2) as u8),
+                72 => todo!("Types::Enum(self.read_unumber(2) as u8)"),
                 73 => Types::CodePointer(self.read_unumber(32) as usize),
                 _ => {
                     panic!(
