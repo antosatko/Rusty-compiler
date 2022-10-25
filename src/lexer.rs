@@ -1,7 +1,6 @@
 pub mod compiler {
     use super::compiler_data::*;
     use crate::{
-        parser::syntax::*,
         token_refactor::{
             parse_err::{self, Errors},
             refactorer::refactor,
@@ -55,8 +54,6 @@ pub mod compiler {
                 println!("{:?}", token);
             }
             println!("Total len: {}", tokens.len());
-            let block = crate::parser::syntax::get_token_block(Kinds::Value(vec![Tokens::Semicolon]), &mut tokens).unwrap();
-            println!("{:?}", block);
         } else {
             println!("neco se pokazilo")
         }
@@ -212,7 +209,7 @@ pub mod compiler {
             Tokens::Text(string) => string.to_string(),
             Tokens::DoubleColon => "::".to_string(),
             Tokens::Keyword(kw) => deparse_keyword(kw),
-            Tokens::Number(_, _, _) => todo!(),
+            Tokens::Number(_int, _float, _suffix) => todo!(),
             _ => "".to_string(),
         }
     }
@@ -320,7 +317,7 @@ pub mod compiler_data {
         Struct(String),
     }
     /// "+-*/=%;:,.({<[]>})&|!?\"'\\"
-    #[derive(Debug, PartialEq, Clone, Eq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub enum Tokens {
         /// opening 0, closing 1
         Parenteses(bool),
@@ -339,20 +336,17 @@ pub mod compiler_data {
         DoubleQuotes,
         Optional,
         Space,
-        Block,
         /// content
         String(String),
         Char(char),
         /// variable name
-        Identifier(String),
         Keyword(Keywords),
-        None,
         /// in case we can not identify token at the moment
         Text(String),
         DoubleColon,
         Number(usize, usize, char),
     }
-    #[derive(Debug, PartialEq, Clone, Copy, Eq)]
+    #[derive(Debug, PartialEq, Clone, Copy)]
     pub enum Operators {
         Add,
         Sub,
@@ -363,7 +357,6 @@ pub mod compiler_data {
         SubEq,
         MulEq,
         DivEq,
-        Compare,
         Equal,
         DoubleEq,
         NotEqual,
@@ -384,7 +377,7 @@ pub mod compiler_data {
     ///     Enum
     ///     CommentLine
     ///     CommentBlock
-    #[derive(Debug, PartialEq, Clone, Copy, Eq)]
+    #[derive(Debug, PartialEq, Clone, Copy)]
     pub enum Keywords {
         /// value
         /// code_block
@@ -402,7 +395,7 @@ pub mod compiler_data {
         ///     <<
         /// "_" ?
         ///     code_block
-        ///     <<<
+        ///     <<
         /// }
         Switch,
 

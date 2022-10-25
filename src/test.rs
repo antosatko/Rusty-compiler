@@ -1,7 +1,7 @@
 pub mod test {
     use crate::runtime::runtime_types::{Context, Instructions::*, Types::*};
 
-    const ID: usize = 3;
+    const ID: usize = 4;
     pub fn test_init(id: Option<usize>, context: &mut Context) {
         let test_id = if let Some(num) = id { num } else { ID };
         match test_id {
@@ -131,6 +131,23 @@ pub mod test {
                     // trigger post-process data report
                     Rd(3, 0),
                     End,
+                ];
+            }
+            4 => {
+                context.stack = vec![
+                    Int(5),
+                    Int(30),
+                ];
+                context.code = vec![
+                    Res(2),
+                    Rd(0, 1),
+                    Rd(1, 0),
+                    End,
+                    // start of fun add(a: int, b: int)
+                    Rd(0, 1),
+                    Rd(1, 0),
+                    Add,
+                    Ret,
                 ];
             }
             _ => {

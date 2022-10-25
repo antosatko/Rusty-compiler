@@ -29,13 +29,6 @@ pub mod refactorer {
                 while tokens[i] != Tokens::DoubleQuotes {
                     res.push_str(&deparse_token(&tokens[i]));
                     i += 1;
-                    if i == tokens.len() {
-                        // syntax err: end of string never found
-                        tokens.splice(idx + 1.., []);
-                        lines.splice(idx + 1.., []);
-                        tokens[idx] = Tokens::String(res);
-                        return 1;
-                    }
                 }
                 tokens.splice(idx + 1..i + 1, []);
                 lines.splice(idx + 1..i + 1, []);
@@ -148,12 +141,12 @@ pub mod refactorer {
                         tokens[idx] = Tokens::Operator(Operators::DivEq);
                         tokens.remove(idx + 1);
                         lines.remove(idx + 1);
-                    } else if let Tokens::Operator(Operators::Div) = tokens[idx + 1] {
+                    }else if let Tokens::Operator(Operators::Div) = tokens[idx + 1] {
                         tokens[idx] = Tokens::Keyword(Keywords::CommentLine);
                         tokens.remove(idx + 1);
                         lines.remove(idx + 1);
                         return 0;
-                    } else if let Tokens::Operator(Operators::Mul) = tokens[idx + 1] {
+                    }else if let Tokens::Operator(Operators::Mul) = tokens[idx + 1] {
                         tokens[idx] = Tokens::Keyword(Keywords::CommentBlock);
                         tokens.remove(idx + 1);
                         lines.remove(idx + 1);

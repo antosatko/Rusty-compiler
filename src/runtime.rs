@@ -8,7 +8,7 @@ pub mod runtime {
         pub fn new() -> Self {
             Self {
                 stack: vec![],
-                call_stack: [CallStack {end:0, code_ptr:0}; 100],
+                call_stack: [CallStack {end:0, code_ptr:0, reg_freeze: [Types::Null; 4]}; 100],
                 registers: [Types::Null; 4],
                 code: vec![],
                 code_ptr: 0,
@@ -195,13 +195,16 @@ pub mod runtime {
                     self.stack_ptr -= 1;
                     self.next_line();
                 }
+                RRet => {
+                    self.registers.copy_from_slice(&self.call_stack[self.stack_ptr + 1].reg_freeze);  
+                    self.next_line();
+                }
                 Res(size) => {
                     let end = self.stack_end() + size - 1;
                     self.stack_ptr += 1;
-                    self.call_stack[self.stack_ptr] = CallStack {
-                        end,
-                        code_ptr: self.code_ptr,
-                    };
+                    self.call_stack[self.stack_ptr].end = end;
+                    self.call_stack[self.stack_ptr].code_ptr = self.code_ptr;
+                    self.call_stack[self.stack_ptr].reg_freeze.copy_from_slice(&self.registers);
                     if end > self.stack_ptr {
                         self.stack.resize(end + 1, Types::Null);
                     }
@@ -827,6 +830,7 @@ pub mod runtime_error {
         CrossTypeOperation(Types, Types, Instructions),
         WrongTypeOperation(Types, Instructions),
         InvalidType(Types, String),
+        InternalErr(usize),
     }
     pub fn panic_rt(kind: ErrTypes) -> bool {
         match kind {
@@ -844,6 +848,9 @@ pub mod runtime_error {
             }
             ErrTypes::InvalidType(typ, operation) => {
                 println!("Invalid Type: {:?} must be of type '{:?}'", typ, operation)
+            }
+            ErrTypes::InternalErr(id) => {
+                println!("Internal err code: {}.", id)
             }
         }
         false
@@ -936,6 +943,8 @@ pub mod runtime_types {
         Brnc(usize, usize),
         /// return           | moves code_pointer to the last position in stack retrieved from stack
         Ret,
+        /// register return  | returns registers to their freezed previous state
+        RRet,
         /// reserve size     | reserves <size> on stack and saves current reg(0)
         Res(usize),
         /// move reg1 reg2   | moves value of <reg1> to <reg2>
@@ -970,6 +979,7 @@ pub mod runtime_types {
     /// holds information of where to jump after function call ends
     #[derive(Clone, Copy)]
     pub struct CallStack {
+        pub reg_freeze: [Types; 4],
         pub end: usize,
         pub code_ptr: usize,
     }

@@ -1,4 +1,3 @@
-io.print("this is a common example of {}", "parsing") {+} "a single value".append(" of unknown type.");
 /*
     This is my playground where I test new compiler features
 */
@@ -25,7 +24,7 @@ fun main(): int {
     let danda = 123.54;
     if danda == 50f {
         danda += 50f;
-        print("tohle je fakt /*cool*/ string");
+        print("tohle je fakt 25 /*cool*/ string");
     }
     else {
         print("Hello,\n World!");
