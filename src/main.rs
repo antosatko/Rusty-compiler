@@ -1,17 +1,19 @@
 use std::{env, fs::File, io::Read};
 //mod canvas;
-mod parser;
+//mod parser;
 mod runtime;
+use ast_parser::ast_parser::generate_ast;
 use runtime::*;
 use runtime_types::*;
 mod reader;
 use reader::reader::*;
 
 use crate::test::test::test_init;
+mod ast_parser;
 mod lexer;
+mod test;
 mod token_refactor;
 mod writer;
-mod test;
 
 /// commands:
 /// - run
@@ -25,7 +27,10 @@ fn main() {
         Some(path) => path,
         None => panic!("Path not specified."),
     };
-    let cmd = args.nth(0).unwrap();
+    let cmd = match args.nth(0) {
+        Some(cmd) => cmd,
+        None => String::from("None"),
+    };
 
     match cmd.as_str() {
         "exe" => {
@@ -47,10 +52,10 @@ fn main() {
             let mut file =
                 File::open(file).expect(&format!("File not found. ({})", path).to_owned());
             file.read_to_string(&mut string).expect("neco se pokazilo");
-            use lexer::compiler::*;
+            use lexer::tokenizer::*;
             /*let idx = find("fun(dvacetz). .nevim nic");
             println!("{:?}", match_keyword(&"fun(dvacetz). .nevim nic"[..idx]))*/
-            parse(string, String::new())
+            println!("{:?}", parse(string, true).0);
         }
         "run" => {
             let file = match args.nth(0) {
@@ -80,17 +85,40 @@ fn main() {
             ctx.run();
             let finish_time = SystemTime::now();
             println!("\nProcess ended.");
-            println!("Total start time: {} ms", build_time.duration_since(start_time).unwrap().as_millis());
-            println!("Total run time: {} ms", finish_time.duration_since(build_time).unwrap().as_millis());
+            println!(
+                "Total start time: {} ms",
+                build_time.duration_since(start_time).unwrap().as_millis()
+            );
+            println!(
+                "Total run time: {} ms",
+                finish_time.duration_since(build_time).unwrap().as_millis()
+            );
             if let Types::Usize(num) = ctx.registers[0] {
                 if num == 1 {
                     println!("\nYou have triggered post-process data report.");
-                    println!("If this is an accident, please do not load Usize(1) to first register at the end of execution.");
+                    println!("If this is an accident, do not load Usize(1) to register(0) at the end of execution.");
                     println!("Heap: {:?}", ctx.heap);
                     println!("stack: {:?}", ctx.stack);
                     println!("registers: {:?}", ctx.registers);
                     println!("heap_reg: {:?}", ctx.heap_registry);
                 }
+            }
+        }
+        "astTest" => {
+            let mut file_name = String::from("ast/");
+            match args.nth(0) {
+                Some(file) => file_name.push_str(&file),
+                None => {
+                    println!("file not specified");
+                    return;
+                }
+            };
+            if let Some(ast) = generate_ast(&file_name) {
+                for node in ast {
+                    println!("{node:?}\n");
+                }
+            }else{
+                println!("failed to parse AST properly")
             }
         }
         _ => {

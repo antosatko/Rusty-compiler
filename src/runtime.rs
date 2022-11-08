@@ -8,7 +8,11 @@ pub mod runtime {
         pub fn new() -> Self {
             Self {
                 stack: vec![],
-                call_stack: [CallStack {end:0, code_ptr:0, reg_freeze: [Types::Null; 4]}; 100],
+                call_stack: [CallStack {
+                    end: 0,
+                    code_ptr: 0,
+                    reg_freeze: [Types::Null; 4],
+                }; 100],
                 registers: [Types::Null; 4],
                 code: vec![],
                 code_ptr: 0,
@@ -27,11 +31,11 @@ pub mod runtime {
         }
         pub fn run_for(&mut self, lenght: usize) -> bool {
             for _ in 0..lenght {
-                if !self.read_line(){
-                    return true
+                if !self.read_line() {
+                    return true;
                 }
             }
-            return false
+            return false;
         }
         fn read_line(&mut self) -> bool {
             use Instructions::*;
@@ -58,14 +62,13 @@ pub mod runtime {
                             PointerTypes::HeapReg => {
                                 if let Some((_, heap_pos)) = self.heap_reg_idx(u_size) {
                                     self.heap[heap_pos] = self.registers[value_reg];
-                                    // should never be used, but I will include it just in case
                                 } else {
-                                    panic!("Somehow you just managed to use broken pointer on feature, that shouldnt even exist. wow")
+                                    panic!("Pointer trying to write to non-existent adress")
                                 }
                             }
                         }
                     } else {
-                        panic!("Pointer must be of type 'Pointer'")
+                        // runtime err: Pointer must be of type 'Pointer'
                     }
                     self.next_line();
                 }
@@ -81,9 +84,8 @@ pub mod runtime {
                             PointerTypes::HeapReg => {
                                 if let Some((_, heap_pos)) = self.heap_reg_idx(u_size) {
                                     self.registers[pointer_reg] = self.heap[heap_pos];
-                                    // should never be used, but I will include it just in case
                                 } else {
-                                    panic!("Somehow you just managed to use broken pointer on feature, that shouldnt even exist. wow")
+                                    panic!("Pointer trying to read from non-existent adress")
                                 }
                             }
                         }
@@ -119,22 +121,27 @@ pub mod runtime {
                         if let PointerTypes::HeapReg = kind {
                             if let Some((_, loc)) = self.heap_reg_idx(u_size) {
                                 if let Types::Usize(size) = self.registers[increment_by_reg] {
-                                    self.registers[pointer_reg] = Types::Pointer(loc + size, PointerTypes::Heap);
+                                    self.registers[pointer_reg] =
+                                        Types::Pointer(loc + size, PointerTypes::Heap);
                                 }
                             }
                         } else {
-                            if let Types::Pointer(u_size2, kind2) = self.registers[increment_by_reg] {
-                                self.registers[pointer_reg] = Types::Pointer(u_size + u_size2, kind2);
+                            if let Types::Pointer(u_size2, kind2) = self.registers[increment_by_reg]
+                            {
+                                self.registers[pointer_reg] =
+                                    Types::Pointer(u_size + u_size2, kind2);
                             }
                         }
                     }
                     self.next_line();
                 }
                 Alc(reg, size_reg) => {
-                    self.registers[reg] = Types::Pointer(
-                        self.heap_push(self.registers[size_reg]),
-                        PointerTypes::HeapReg,
-                    );
+                    if let Some(size) = self.heap_alloc(self.registers[size_reg]) {
+                        self.registers[reg] = Types::Pointer(size, PointerTypes::HeapReg);
+                    } else {
+                        self.registers[reg] = Types::Null;
+                        //
+                    }
                     self.next_line();
                 }
                 Dalc(reg) => {
@@ -196,7 +203,8 @@ pub mod runtime {
                     self.next_line();
                 }
                 RRet => {
-                    self.registers.copy_from_slice(&self.call_stack[self.stack_ptr + 1].reg_freeze);  
+                    self.registers
+                        .copy_from_slice(&self.call_stack[self.stack_ptr + 1].reg_freeze);
                     self.next_line();
                 }
                 Res(size) => {
@@ -204,7 +212,9 @@ pub mod runtime {
                     self.stack_ptr += 1;
                     self.call_stack[self.stack_ptr].end = end;
                     self.call_stack[self.stack_ptr].code_ptr = self.code_ptr;
-                    self.call_stack[self.stack_ptr].reg_freeze.copy_from_slice(&self.registers);
+                    self.call_stack[self.stack_ptr]
+                        .reg_freeze
+                        .copy_from_slice(&self.registers);
                     if end > self.stack_ptr {
                         self.stack.resize(end + 1, Types::Null);
                     }
@@ -263,7 +273,7 @@ pub mod runtime {
                             }
                         }
                         _ => {
-                            panic!("Can not perform math operations on non-number values.")
+                            panic!("Can not perform math operations on non-numeric types.")
                         }
                     }
                     self.next_line();
@@ -315,7 +325,7 @@ pub mod runtime {
                             }
                         }
                         _ => {
-                            panic!("Can not perform math operations on non-number values.")
+                            panic!("Can not perform math operations on non-numeric types.")
                         }
                     }
                     self.next_line();
@@ -367,7 +377,7 @@ pub mod runtime {
                             }
                         }
                         _ => {
-                            panic!("Can not perform math operations on non-number values.")
+                            panic!("Can not perform math operations on non-numeric types.")
                         }
                     }
                     self.next_line();
@@ -419,7 +429,7 @@ pub mod runtime {
                             }
                         }
                         _ => {
-                            panic!("Can not perform math operations on non-number values.")
+                            panic!("Can not perform math operations on non-numeric types.")
                         }
                     }
                     self.next_line();
@@ -471,7 +481,7 @@ pub mod runtime {
                             }
                         }
                         _ => {
-                            panic!("Can not perform math operations on non-number values.")
+                            panic!("Can not perform math operations on non-numeric types.")
                         }
                     }
                     self.next_line();
@@ -744,15 +754,18 @@ pub mod runtime {
         fn next_line(&mut self) {
             self.code_ptr += 1;
         }
-        fn heap_push(&mut self, size: Types) -> usize {
+        /// creates object on heap of specified size
+        fn heap_alloc(&mut self, size: Types) -> Option<usize> {
             return if let Types::Usize(s) = size {
                 self.heap_reg_push(s);
                 self.heap.resize(self.heap.len() + s, Types::Null);
-                self.heap_reg_len() - 1
+                Some(self.heap_reg_len() - 1)
             } else {
-                panic!("")
+                // runtime err: size of heap-allocated objects must be of type Usize
+                None
             };
         }
+        /// ramoves object from heap
         fn heap_reg_del(&mut self, idx: usize) {
             if let Some((index, heap_loc)) = self.heap_reg_idx(idx) {
                 let heap_range = heap_loc..self.heap_registry[index].len + heap_loc;
@@ -793,6 +806,7 @@ pub mod runtime {
             }
             Some(hr_path)
         }
+        /// creates representative for heap-allocated-objects on heap_reg
         fn heap_reg_push(&mut self, len: usize) {
             let reg_len = self.heap_registry.len();
             for (idx, node) in self.heap_registry.iter_mut().enumerate() {
@@ -814,6 +828,7 @@ pub mod runtime {
                 dels: 0,
             });
         }
+
         fn heap_reg_len(&self) -> usize {
             let mut len = 0;
             for reg in self.heap_registry.iter() {
@@ -830,7 +845,6 @@ pub mod runtime_error {
         CrossTypeOperation(Types, Types, Instructions),
         WrongTypeOperation(Types, Instructions),
         InvalidType(Types, String),
-        InternalErr(usize),
     }
     pub fn panic_rt(kind: ErrTypes) -> bool {
         match kind {
@@ -848,9 +862,6 @@ pub mod runtime_error {
             }
             ErrTypes::InvalidType(typ, operation) => {
                 println!("Invalid Type: {:?} must be of type '{:?}'", typ, operation)
-            }
-            ErrTypes::InternalErr(id) => {
-                println!("Internal err code: {}.", id)
             }
         }
         false
@@ -890,20 +901,20 @@ pub mod runtime_types {
         CodePointer(usize),
         Null,
     }
-    /// runtime 
+    /// runtime
     #[derive(Clone, Copy, Debug)]
     pub enum PointerTypes {
         /// location on stack
-        /// 
+        ///
         /// never expires
         Stack,
         /// heap pointer in "broken state"
         /// needs to be transformed into heap pointer
-        /// 
+        ///
         /// never expires
         HeapReg,
         /// location on heap
-        /// 
+        ///
         /// may expire at any time
         Heap,
     }

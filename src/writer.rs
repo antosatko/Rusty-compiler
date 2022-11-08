@@ -1,4 +1,6 @@
 pub mod writer {
+    use core::panic;
+
     use crate::runtime::runtime_types::{Instructions, Types};
     pub fn write(code: &Vec<Instructions>, consts: &Vec<Types>, file_name: &str) {
         use std::fs::File;
@@ -73,18 +75,18 @@ pub mod writer {
     pub fn instr_to_str(instr: Instructions) -> String {
         use Instructions::*;
         match instr {
-            Wr(n) => format!("{}{}", 65 as char, num_to_hbytes2(n)),
-            Rd(n, n1) => format!("{}{}{}", 66 as char, num_to_hbytes2(n), num_to_hbytes1(n1)),
-            Wrp(n, n1) => format!("{}{}{}", 67 as char, num_to_hbytes1(n), num_to_hbytes1(n1)),
-            Rdp(n, n1) => format!("{}{}{}", 68 as char, num_to_hbytes1(n), num_to_hbytes1(n1)),
-            Rdc(n, n1) => format!("{}{}{}", 69 as char, num_to_hbytes2(n), num_to_hbytes1(n1)),
-            Ptr(n) => format!("{}{}", 70 as char, num_to_hbytes2(n)),
-            Alc(n, n1) => format!("{}{}{}", 71 as char, num_to_hbytes1(n), num_to_hbytes1(n1)),
-            Goto(n) => format!("{}{}", 72 as char, num_to_hbytes4(n)),
-            Brnc(n, n1) => format!("{}{}{}", 73 as char, num_to_hbytes4(n), num_to_hbytes4(n1)),
+            Wr(n) => format!("{}{}", 65 as char, num_to_hbytes(n, 2)),
+            Rd(n, n1) => format!("{}{}{}", 66 as char, num_to_hbytes(n, 2), num_to_hbytes(n1, 1)),
+            Wrp(n, n1) => format!("{}{}{}", 67 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
+            Rdp(n, n1) => format!("{}{}{}", 68 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
+            Rdc(n, n1) => format!("{}{}{}", 69 as char, num_to_hbytes(n, 2), num_to_hbytes(n1, 1)),
+            Ptr(n) => format!("{}{}", 70 as char, num_to_hbytes(n, 2)),
+            Alc(n, n1) => format!("{}{}{}", 71 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
+            Goto(n) => format!("{}{}", 72 as char, num_to_hbytes(n, 4)),
+            Brnc(n, n1) => format!("{}{}{}", 73 as char, num_to_hbytes(n, 4), num_to_hbytes(n1, 4)),
             Ret => format!("{}", 74 as char),
-            Res(n) => format!("{}{}", 75 as char, num_to_hbytes2(n)),
-            Mov(n, n1) => format!("{}{}{}", 76 as char, num_to_hbytes1(n), num_to_hbytes1(n1)),
+            Res(n) => format!("{}{}", 75 as char, num_to_hbytes(n, 2)),
+            Mov(n, n1) => format!("{}{}{}", 76 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
             Add => format!("{}", 77 as char),
             Sub => format!("{}", 78 as char),
             Mul => format!("{}", 79 as char),
@@ -95,27 +97,25 @@ pub mod writer {
             And => format!("{}", 84 as char),
             Or => format!("{}", 85 as char),
             Not => format!("{}", 86 as char),
-            Cal(n, n1) => format!("{}{}{}", 87 as char, num_to_hbytes3(n), num_to_hbytes2(n1)),
+            Cal(n, n1) => format!("{}{}{}", 87 as char, num_to_hbytes(n, 3), num_to_hbytes(n1, 2)),
             End => format!("{}", 88 as char),
-            Dalc(n) => format!("{}{}", 89 as char, num_to_hbytes1(n)),
-            RAlc(n, n1) => format!("{}{}{}", 90 as char, num_to_hbytes1(n), num_to_hbytes1(n1)),
-            Idx(n, n1) => format!("{}{}{}", 91 as char, num_to_hbytes1(n), num_to_hbytes1(n1)),
-            Repp(n) => format!("{}{}", 92 as char, num_to_hbytes1(n)),
+            Dalc(n) => format!("{}{}", 89 as char, num_to_hbytes(n, 1)),
+            RAlc(n, n1) => format!("{}{}{}", 90 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
+            Idx(n, n1) => format!("{}{}{}", 91 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
+            Repp(n) => format!("{}{}", 92 as char, num_to_hbytes(n, 1)),
             Less => format!("{}", 93 as char),
-            Debug(n) => format!("{}{}", 94 as char, num_to_hbytes1(n)),
-            Gotop(n) => format!("{}{}", 95 as char, num_to_hbytes4(n)),
+            Debug(n) => format!("{}{}", 94 as char, num_to_hbytes(n, 1)),
+            Gotop(n) => format!("{}{}", 95 as char, num_to_hbytes(n, 4)),
+            RRet => format!("{}", 96 as char),
         }
     }
-    pub fn num_to_hbytes1(num: usize) -> String {
-        format!("{:1x}", num).replace(" ", "0")
-    }
-    pub fn num_to_hbytes2(num: usize) -> String {
-        format!("{:2x}", num).replace(" ", "0")
-    }
-    pub fn num_to_hbytes3(num: usize) -> String {
-        format!("{:3x}", num).replace(" ", "0")
-    }
-    pub fn num_to_hbytes4(num: usize) -> String {
-        format!("{:4x}", num).replace(" ", "0")
+    pub fn num_to_hbytes(num: usize, bytes: u8) -> String {
+        match bytes {
+            1 => format!("{:1x}", num),
+            2 => format!("{:2x}", num),
+            3 => format!("{:3x}", num),
+            4 => format!("{:4x}", num),
+            _ => panic!("{}", bytes),
+        }.replace(" ", "0")
     }
 }

@@ -1,9 +1,176 @@
-pub mod refactorer {
-    use crate::lexer::{
-        tokenizer::{deparse_token, Operators, Tokens},
+pub mod ast_parser {
+    use super::formater::refactor;
+    use crate::lexer::tokenizer::*;
+    pub fn generate_ast(location: &str) -> Option<Vec<Head>> {
+        use std::fs;
+        let source =
+            fs::read_to_string(location).expect("Unexpected problem while opening AST file");
+        let (tokens, mut lines, mut errors) = parse(source, false);
+        if let Ok(mut refactored) = refactor(tokens, &mut lines, &mut errors) {
+            return Some(analize(&mut refactored));
+        } else {
+            println!(
+                "Could not parse AST {location}, number of errors: {}",
+                errors.len()
+            );
+            return None;
+        }
+    }
+    fn analize(tokens: &mut Vec<Tokens>) -> Vec<Head> {
+        let mut tree: Vec<Head> = vec![];
+        let mut idx = 0;
+        while let Some(head) = read_head(tokens, &mut idx) {
+            tree.push(head);
+            idx += 1;
+        }
+        tree
+    }
+    fn read_head(tokens: &mut Vec<Tokens>, idx: &mut usize) -> Option<Head> {
+        if tokens.len() == *idx {
+            return None;
+        }
+        let name = if let Tokens::Text(txt) = &tokens[*idx] {
+            *idx += 1;
+            txt.to_string()
+        } else {
+            return None;
+        };
+        let mut parameters = vec![];
+        while tokens[*idx] != Tokens::Tab {
+            match &tokens[*idx] {
+                Tokens::SquareBracket(closed) => {
+                    if !closed {
+                        if let Tokens::Text(txt) = &tokens[*idx + 1] {
+                            parameters.push(HeadParam::Array(txt.to_string()));
+                            *idx += 2;
+                        } else {
+                            return None;
+                        }
+                    } else {
+                        return None;
+                    }
+                }
+                Tokens::Text(txt) => {
+                    parameters.push(HeadParam::Value(txt.to_string()));
+                    *idx += 1;
+                }
+                _ => {}
+            }
+        }
+        Some(Head {
+            name,
+            parameters,
+            nodes: get_nodes(tokens, idx, 1),
+        })
+    }
+    fn get_nodes(tokens: &mut Vec<Tokens>, idx: &mut usize, tabs: usize) -> Vec<NodeType> {
+        let mut nodes: Vec<NodeType> = vec![];
+        while count_tabs(&tokens, *idx) == tabs {
+            *idx += tabs;
+            match tokens[*idx + 1] {
+                Tokens::Optional => {
+                    tokens.remove(*idx + 1);
+                    let node = NodeType::Maybe(Node {
+                        kind: tokens.remove(*idx),
+                        arguments: get_node_args(&tokens, idx),
+                        nodes: get_nodes(tokens, idx, tabs + 1),
+                    });
+                    nodes.push(node);
+                }
+                Tokens::Operator(op) => match op {
+                    Operators::Not => {
+                        tokens.remove(*idx + 1);
+                        let node = NodeType::Command(Node {
+                            kind: tokens.remove(*idx),
+                            arguments: get_node_args(&tokens, idx),
+                            nodes: get_nodes(tokens, idx, tabs + 1),
+                        });
+                        nodes.push(node);
+                    }
+                    Operators::Equal => {
+                        let node = NodeType::ArgsCondition(ArgsCon {
+                            params: get_node_args(&tokens, idx),
+                            nodes: get_nodes(tokens, idx, tabs + 1),
+                        });
+                        nodes.push(node);
+                    }
+                    _ => {}
+                },
+                _ => {
+                    let node = NodeType::Expect(Node {
+                        kind: tokens.remove(*idx),
+                        arguments: get_node_args(&tokens, idx),
+                        nodes: get_nodes(tokens, idx, tabs + 1),
+                    });
+                    nodes.push(node);
+                }
+            }
+        }
+        nodes
+    }
+    fn get_node_args(tokens: &Vec<Tokens>, idx: &mut usize) -> Vec<NodeParam> {
+        let mut args = vec![];
+        while let Tokens::Text(name) = &tokens[*idx] {
+            *idx += 2;
+            if let Tokens::String(value) = &tokens[*idx] {
+                args.push(NodeParam {
+                    name: name.to_string(),
+                    value: value.to_string(),
+                })
+            }
+            *idx += 1;
+        }
+        args
+    }
+    fn count_tabs(tokens: &Vec<Tokens>, idx: usize) -> usize {
+        let mut count = 0;
+        while let Tokens::Tab = &tokens[idx + count] {
+            count += 1;
+        }
+        count
+    }
+    #[derive(Debug)]
+    pub struct Head {
+        name: String,
+        parameters: Vec<HeadParam>,
+        nodes: Vec<NodeType>,
+    }
+    #[derive(Debug)]
+    pub enum HeadParam {
+        Array(String),
+        Value(String),
+    }
+    #[derive(Debug)]
+    pub struct Node {
+        kind: Tokens,
+        arguments: Vec<NodeParam>,
+        nodes: Vec<NodeType>,
+    }
+    #[derive(Debug)]
+    pub enum NodeType {
+        Maybe(Node),
+        Expect(Node),
+        Command(Node),
+        ArgsCondition(ArgsCon),
+    }
+    #[derive(Debug)]
+    pub struct NodeParam {
+        name: String,
+        value: String,
+    }
+    #[derive(Debug)]
+    pub struct ArgsCon {
+        params: Vec<NodeParam>,
+        nodes: Vec<NodeType>,
+    }
+}
+
+mod formater {
+    use crate::{
+        lexer::tokenizer::{/*Keywords,*/ deparse_token, Operators, Tokens},
+        token_refactor::{parse_err::Errors, refactorer::LexingErr},
     };
 
-    use super::parse_err::Errors;
     pub fn refactor(
         mut tokens: Vec<Tokens>,
         lines: &mut Vec<(usize, usize)>,
@@ -50,14 +217,6 @@ pub mod refactorer {
                     tokens[idx] = Tokens::DoubleColon;
                     tokens.remove(idx + 1);
                     lines.remove(idx + 1);
-                }
-            }
-            Tokens::Semicolon => {
-                if tokens.len() != idx + 1 {
-                    while let Tokens::Semicolon = tokens[idx + 1] {
-                        tokens.remove(idx + 1);
-                        lines.remove(idx + 1);
-                    }
                 }
             }
             Tokens::Text(txt) => {
@@ -113,10 +272,15 @@ pub mod refactorer {
                         return 1;
                     }
                 }
+                // nesting
                 for char in txt.chars() {
                     if !char.is_whitespace() {
                         return 1;
                     }
+                }
+                if txt == "\t" {
+                    tokens[idx] = Tokens::Tab;
+                    return 1;
                 }
                 lines.remove(idx);
                 tokens.remove(idx);
@@ -149,34 +313,6 @@ pub mod refactorer {
                         tokens[idx] = Tokens::Operator(Operators::DivEq);
                         tokens.remove(idx + 1);
                         lines.remove(idx + 1);
-                    } else if let Tokens::Operator(Operators::Div) = tokens[idx + 1] {
-                        loop {
-                            tokens.remove(idx);
-                            lines.remove(idx);
-                            if let Tokens::Text(str) = &tokens[idx] {
-                                if str == "\n" {
-                                    break;
-                                }
-                            }
-                        }
-                        tokens.remove(idx);
-                        lines.remove(idx);
-                        return 0;
-                    } else if let Tokens::Operator(Operators::Mul) = tokens[idx + 1] {
-                        loop {
-                            tokens.remove(idx);
-                            lines.remove(idx);
-                            if let Tokens::Operator(Operators::Mul) = &tokens[idx] {
-                                if let Tokens::Operator(Operators::Div) = &tokens[idx + 1] {
-                                    break;
-                                }
-                            }
-                        }
-                        tokens.remove(idx);
-                        lines.remove(idx);
-                        tokens.remove(idx);
-                        lines.remove(idx);
-                        return 0;
                     }
                 }
                 Operators::Not => {
@@ -198,48 +334,17 @@ pub mod refactorer {
             Tokens::AngleBracket(bol) => {
                 if let Tokens::Operator(eq) = tokens[idx + 1] {
                     if let Operators::Equal = eq {
-                        match *bol {
-                            true => {
-                                tokens[idx] = Tokens::Operator(Operators::LessEq)
-                            }
-                            false => {
-                                tokens[idx] = Tokens::Operator(Operators::MoreEq)
-                            }
-                        }
+                        tokens[idx] = match *bol {
+                            true => Tokens::Operator(Operators::LessEq),
+                            false => Tokens::Operator(Operators::MoreEq),
+                        };
                         tokens.remove(idx + 1);
                         lines.remove(idx + 1);
                     }
                 }
             }
-            Tokens::Pipe => {
-                if let Tokens::Pipe = tokens[idx + 1] {
-                    tokens[idx] = Tokens::Operator(Operators::Or);
-                    tokens.remove(idx + 1);
-                    lines.remove(idx + 1);
-                }
-                println!("{:?}", tokens[idx]);
-            }
-            Tokens::Ampersant => {
-                if let Tokens::Ampersant = tokens[idx + 1] {
-                    tokens[idx] = Tokens::Operator(Operators::And);
-                    tokens.remove(idx + 1);
-                    lines.remove(idx + 1);
-                }
-            }
             _ => {}
         }
         1
-    }
-    pub enum LexingErr {}
-}
-
-pub mod parse_err {
-    use crate::lexer::tokenizer::Tokens;
-
-    pub enum Errors {
-        // (line, column) token
-        UnexpectedToken((usize, usize), Tokens),
-        // (line, column) number
-        InvalidNumber((usize, usize), String),
     }
 }
