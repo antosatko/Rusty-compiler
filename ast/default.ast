@@ -215,3 +215,13 @@ entry main [nodes
 	const ? set="nodes" back="5"
 	"main" ? 
 		function set="main" back="7";
+
+entry main [nodes
+	use ? set="nodes" back="0"
+	struct ? set="nodes" back="1"
+	function ? set="nodes" back="2"
+	enum ? set="nodes" back="3"
+	trait ? set="nodes" back="4"
+	const ? set="nodes" back="5"
+	"main" ? 
+		function set="main" back="7";
