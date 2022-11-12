@@ -1,11 +1,29 @@
-pub mod tokenizer {
+pub mod compiler {
+    use super::compiler_data::*;
     use crate::{
+        //parser::syntax::*,
         token_refactor::{
             parse_err::{self, Errors},
             refactorer::refactor,
         },
     };
     const RESERVED_CHARS: &str = " +-*/=%;:,.({<[]>})&|!?\"'\\";
+    /*pub const KEYWORDS: [&str; 19] = [
+        "if", "switch", "let", "const", "fun", "struct", "trait", "enum", "loop", "for", "while",
+        "do", "yeet", "break", "continue", "lib", "use", "//", "/*",
+    ];
+    pub const GLOBALS: [Keywords; 9] = [
+        Keywords::Lib,
+        Keywords::Use,
+        Keywords::Const,
+        Keywords::Function,
+        Keywords::Struct,
+        Keywords::Trait,
+        Keywords::Enum,
+        Keywords::CommentLine,
+        Keywords::CommentBlock,
+    ];*/*/
+    //pub const VALUE_HOLDERS: [Keywords; 3] = [Keywords::If, Keywords::Loop, Keywords::Switch];
     pub fn parse(file: String, format: bool) -> (Vec<Tokens>, Vec<(usize, usize)>, Vec<parse_err::Errors>) {
         let mut tokens: Vec<Tokens> = vec![];
         let mut text_pos: Vec<(usize, usize)> = vec![(0, 0)];
@@ -43,8 +61,79 @@ pub mod tokenizer {
         let len = if len == 0 { 1 } else { len };
         let str = &line[0..len];
         let token = parse_token(&str);
+        /*if let Some(idx) = find_keyword(&line) {
+            // keyword
+            if KEYWORDS[idx].len() == str.len() {
+                return (
+                    Tokens::Keyword(parse_keyword(&KEYWORDS[idx])),
+                    KEYWORDS[idx].len(),
+                );
+            }
+        } else {
+            // other
+            return (token, str.len());
+        };*/
         return (token, str.len());
     }
+    // returns index of found keyword in const KEYWORDS
+    /*pub fn find_keyword(string: &str) -> Option<usize> {
+        for (i, key) in KEYWORDS.iter().enumerate() {
+            if let Some(idx) = string.find(key) {
+                if idx == 0 {
+                    return Some(i);
+                }
+            }
+        }
+        None
+    }
+    pub fn parse_keyword(string: &str) -> Keywords {
+        match string {
+            "if" => Keywords::If,
+            "switch" => Keywords::Switch,
+            "let" => Keywords::Let,
+            "const" => Keywords::Const,
+            "fun" => Keywords::Function,
+            "struct" => Keywords::Struct,
+            "trait" => Keywords::Trait,
+            "enum" => Keywords::Enum,
+            "loop" => Keywords::Loop,
+            "for" => Keywords::For,
+            "while" => Keywords::While,
+            "do" => Keywords::DoWhile,
+            "yeet" => Keywords::Return,
+            "break" => Keywords::Break,
+            "continue" => Keywords::Continue,
+            "lib" => Keywords::Lib,
+            "use" => Keywords::Use,
+            "//" => Keywords::CommentLine,
+            "/*" => Keywords::CommentBlock,
+            _ => Keywords::Value,
+        }
+    }
+    pub fn deparse_keyword(keyword: &Keywords) -> String {
+        match keyword {
+            Keywords::If => "if".to_string(),
+            Keywords::Switch => "switch".to_string(),
+            Keywords::Let => "let".to_string(),
+            Keywords::Const => "const".to_string(),
+            Keywords::Function => "fun".to_string(),
+            Keywords::Struct => "struct".to_string(),
+            Keywords::Trait => "trait".to_string(),
+            Keywords::Enum => "enum".to_string(),
+            Keywords::Loop => "loop".to_string(),
+            Keywords::For => "for".to_string(),
+            Keywords::While => "while".to_string(),
+            Keywords::DoWhile => "do".to_string(),
+            Keywords::Return => "yeet".to_string(),
+            Keywords::Break => "break".to_string(),
+            Keywords::Continue => "continue".to_string(),
+            Keywords::Lib => "lib".to_string(),
+            Keywords::Use => "use".to_string(),
+            Keywords::CommentLine => "//".to_string(),
+            Keywords::CommentBlock => "/*".to_string(),
+            Keywords::Value => "".to_string(),
+        }
+    } */*/ */
     pub fn parse_token(string: &str) -> Tokens {
         // +-*/=%;:,.({<[]>})&|!?"'\
         match string {
@@ -85,10 +174,8 @@ pub mod tokenizer {
             Tokens::Operator(Operators::Div) => "/".to_string(),
             Tokens::Operator(Operators::Equal) => "=".to_string(),
             Tokens::Operator(Operators::Mod) => "%".to_string(),
-            Tokens::Operator(Operators::And) => "&&".to_string(),
-            Tokens::Operator(Operators::Or) => "||".to_string(),
-            Tokens::Ampersant => "&".to_string(),
-            Tokens::Pipe => "|".to_string(),
+            Tokens::Operator(Operators::And) => "&".to_string(),
+            Tokens::Operator(Operators::Or) => "|".to_string(),
             Tokens::Operator(Operators::Not) => "!".to_string(),
             Tokens::Optional => "?".to_string(),
             Tokens::Semicolon => ";".to_string(),
@@ -108,6 +195,7 @@ pub mod tokenizer {
             Tokens::Space => " ".to_string(),
             Tokens::Text(string) => string.to_string(),
             Tokens::DoubleColon => "::".to_string(),
+            //Tokens::Keyword(kw) => deparse_keyword(kw),
             Tokens::Number(_, _, _) => todo!(),
             _ => "".to_string(),
         }
@@ -129,57 +217,6 @@ pub mod tokenizer {
             lowest_idx
         };
         idx
-    }
-    /// "+-*/=%;:,.({<[]>})&|!?\"'\\"
-    #[derive(Debug, PartialEq, Clone, Eq)]
-    pub enum Tokens {
-        /// opening 0, closing 1
-        Parenteses(bool),
-        /// opening 0, closing 1
-        CurlyBracket(bool),
-        /// opening 0, closing 1
-        SquareBracket(bool),
-        /// opening 0, closing 1
-        AngleBracket(bool),
-        Operator(Operators),
-        Colon,
-        Dot,
-        Semicolon,
-        Comma,
-        Quotes,
-        DoubleQuotes,
-        Optional,
-        Space,
-        /// content
-        String(String),
-        Char(char),
-        /// in case we can not identify token at the moment
-        Text(String),
-        DoubleColon,
-        Number(usize, usize, char),
-        Tab,
-        Pipe,
-        Ampersant,
-    }
-    #[derive(Debug, PartialEq, Clone, Copy, Eq)]
-    pub enum Operators {
-        Add,
-        Sub,
-        Mul,
-        Div,
-        Mod,
-        AddEq,
-        SubEq,
-        MulEq,
-        DivEq,
-        Equal,
-        DoubleEq,
-        NotEqual,
-        LessEq,
-        MoreEq,
-        And,
-        Or,
-        Not,
     }
 }
 
@@ -265,6 +302,204 @@ pub mod compiler_data {
         Function(String),
         Enum(String),
         Struct(String),
+    }
+    /// "+-*/=%;:,.({<[]>})&|!?\"'\\"
+    #[derive(Debug, PartialEq, Clone, Eq)]
+    pub enum Tokens {
+        /// opening 0, closing 1
+        Parenteses(bool),
+        /// opening 0, closing 1
+        CurlyBracket(bool),
+        /// opening 0, closing 1
+        SquareBracket(bool),
+        /// opening 0, closing 1
+        AngleBracket(bool),
+        Operator(Operators),
+        Colon,
+        Dot,
+        Semicolon,
+        Comma,
+        Quotes,
+        DoubleQuotes,
+        Optional,
+        Space,
+        /// content
+        String(String),
+        Char(char),
+        /// in case we can not identify token at the moment
+        Text(String),
+        DoubleColon,
+        Number(usize, usize, char),
+        Tab,
+        Pipe,
+        Ampersant,
+    }
+    #[derive(Debug, PartialEq, Clone, Copy, Eq)]
+    pub enum Operators {
+        Add,
+        Sub,
+        Mul,
+        Div,
+        Mod,
+        AddEq,
+        SubEq,
+        MulEq,
+        DivEq,
+        Equal,
+        DoubleEq,
+        NotEqual,
+        LessEq,
+        MoreEq,
+        And,
+        Or,
+        Not,
+    }/*
+    /// compiler iterates over source, looking for theese keywords
+    /// dependent keywords:
+    ///     Break
+    ///     Continue
+    /// global allowed:
+    ///     Lib
+    ///     Use
+    ///     Conts
+    ///     Fun
+    ///     Struct
+    ///     Enum
+    ///     CommentLine
+    ///     CommentBlock
+    #[derive(Debug, PartialEq, Clone, Copy, Eq)]
+    pub enum Keywords {
+        /// value
+        /// code_block
+        /// "else if" ?
+        ///     value
+        ///     code_block
+        ///     <<<
+        /// "else" ?
+        ///     code_block
+        If,
+        /// value
+        /// {
+        /// value ?
+        ///     code_block
+        ///     <<
+        /// "_" ?
+        ///     code_block
+        ///     <<<
+        /// }
+        Switch,
+
+        /// identifier
+        /// ; ?
+        ///     !end
+        /// : ?
+        ///     identifier alias="type"
+        /// ; ? 
+        ///     !end
+        /// = ?
+        ///     value ? break=";"
+        ///         end
+        ///     keyword if ? must="return"
+        ///     ;
+        Let,
+        /// identifier
+        /// :
+        ///     type
+        /// =
+        ///     value must="knownAtCompTime"
+        /// ;  
+        Const,
+        /// identifier
+        /// (
+        ///     value ?
+        ///         , ?
+        ///             <<
+        /// )
+        /// : ?
+        ///     return_type
+        /// code_block
+        Function,
+        /// identifier
+        /// {
+        /// Trait_identifier ?
+        ///     <
+        /// key ?
+        ///     :
+        ///     type
+        ///     , ?
+        ///         <<<<<
+        /// }
+        Struct,
+        /// identifier
+        /// {
+        /// Function ?
+        ///     <
+        /// key ?
+        ///     :
+        ///     type
+        ///     , ?
+        ///         <<<<<
+        /// }
+        Trait,
+        /// identifier
+        /// {
+        /// identifier ?
+        ///     = ?
+        ///         number
+        ///         , ?
+        ///             <<<<
+        ///     , ?
+        ///         <<<
+        /// }
+        Enum,
+
+        /// code_block {breakIf: [<Continue>, <Break>]}
+        Loop,
+        /// jeste uvidim
+        /// code_block {breakIf: [<Continue>, <Break>]}
+        For,
+        /// value
+        /// code_block {breakIf: [<Continue>, <Break>]}
+        While,
+        /// code_block
+        /// value {breakIf: [<Continue>, <Break>]}
+        /// ;
+        DoWhile,
+
+        /// value ?
+        /// ;
+        Return,
+        /// value ?
+        /// ;
+        Break,
+        Continue,
+
+        /// file_identifier
+        /// "as" ?
+        ///     alias
+        /// ;
+        Lib,
+        /// file_identifier
+        /// "as" ?
+        ///     alias
+        /// ;
+        Use,
+
+        /// checked after all other keywords
+        /// value
+        /// ;
+        Value,
+
+        /// _
+        /// "\n"
+        CommentLine,
+        /// _
+        /// "* /"
+        CommentBlock,
+    } */
+    pub enum Modifiers {
+        Const,
+        Imutable,
     }
     impl Dictionary {
         pub fn new() -> Self {

@@ -58,7 +58,7 @@ pub mod reader {
                     self.ctx.stack.push(Types::Char('\0'));
                     return;
                 }
-                72 => Types::Enum(self.read_unumber(2) as u8),
+                72 => todo!("Types::Enum(self.read_unumber(2) as u8)"),
                 73 => Types::CodePointer(self.read_unumber(32) as usize),
                 _ => {
                     panic!(
@@ -105,6 +105,7 @@ pub mod reader {
                 93 => Instructions::Less,
                 94 => Instructions::Debug(self.read_unumber(1)),
                 95 => Instructions::Gotop(self.read_unumber(1)),
+                96 => Instructions::RRet,
                 _ => {
                     panic!(
                         "Unexpected character '{}' at {}.",
