@@ -1,14 +1,17 @@
 pub mod tokenizer {
-    use crate::{
-        token_refactor::{
-            parse_err::{self, Errors},
-            refactorer::refactor,
-        },
+    use crate::lexing_preprocessor::{
+        parse_err::{self},
+        lexing_preprocessor::refactor,
     };
     const RESERVED_CHARS: &str = " +-*/=%;:,.({<[]>})&|!?\"'\\";
-    pub fn parse(file: String, format: bool) -> (Vec<Tokens>, Vec<(usize, usize)>, Vec<parse_err::Errors>) {
-        let mut tokens: Vec<Tokens> = vec![];
-        let mut text_pos: Vec<(usize, usize)> = vec![(0, 0)];
+    pub fn tokenize(
+        file: &Vec<u8>,
+        format: bool,
+    ) -> (Vec<Tokens>, Vec<(usize, usize)>, Vec<parse_err::Errors>) {
+        let allocation_size = (file.len() as f64 * 0.7) as usize;
+        let mut tokens: Vec<Tokens> = Vec::with_capacity(allocation_size);
+        let mut text_pos: Vec<(usize, usize)> = Vec::with_capacity(allocation_size);
+        text_pos.push((0,0));
         let mut errors: Vec<parse_err::Errors> = vec![];
 
         let mut i = 0;
@@ -18,7 +21,7 @@ pub mod tokenizer {
                 text_pos[text_pos.len() - 1].0 + res.1,
                 text_pos[text_pos.len() - 1].1,
             ));
-            if let Tokens::Text(txt) = &res.0 {
+            if let Tokens::Whitespace(txt) = &res.0 {
                 if txt == "\n" {
                     let len = text_pos.len() - 1;
                     text_pos[len].1 += 1;
@@ -28,30 +31,30 @@ pub mod tokenizer {
             tokens.push(res.0);
             i += res.1;
         }
-        if !format{
+        if !format {
             return (tokens, text_pos, errors);
         }
-        if let Ok(refactored) = refactor(tokens, &mut text_pos, &mut errors) {
-            return (refactored, text_pos, errors);
+        if let Ok(refactored) = refactor(tokens, text_pos, &mut errors) {
+            return (refactored.0, refactored.1, errors);
         } else {
             println!("neco se pokazilo");
             panic!();
         }
     }
-    pub fn get_token(line: &str) -> (Tokens, usize) {
+    pub fn get_token(line: &[u8]) -> (Tokens, usize) {
         let len = find_ws_str(line, &RESERVED_CHARS);
         let len = if len == 0 { 1 } else { len };
         let str = &line[0..len];
-        let token = parse_token(&str);
+        let token = parse_token(std::str::from_utf8(str).unwrap());
         return (token, str.len());
     }
     pub fn parse_token(string: &str) -> Tokens {
         // +-*/=%;:,.({<[]>})&|!?"'\
         match string {
-            "+" => Tokens::Operator(Operators::Add),
-            "-" => Tokens::Operator(Operators::Sub),
-            "*" => Tokens::Operator(Operators::Mul),
-            "/" => Tokens::Operator(Operators::Div),
+            "+" => Tokens::Operator(Operators::Plus),
+            "-" => Tokens::Operator(Operators::Minus),
+            "*" => Tokens::Operator(Operators::Star),
+            "/" => Tokens::Operator(Operators::Slash),
             "=" => Tokens::Operator(Operators::Equal),
             "%" => Tokens::Operator(Operators::Mod),
             "&" => Tokens::Ampersant,
@@ -73,16 +76,24 @@ pub mod tokenizer {
             "[" => Tokens::SquareBracket(false),
             "]" => Tokens::SquareBracket(true),
             " " => Tokens::Space,
-            _ => Tokens::Text(string.to_string()),
+            _ => if is_whitespace(string) {Tokens::Whitespace(string.to_string())}else{Tokens::Text(string.to_string())},
         }
+    }
+    fn is_whitespace(str: &str) -> bool {
+        for char in str.chars() {
+            if !char.is_whitespace(){
+                return false
+            }
+        }
+        true
     }
     pub fn deparse_token(token: &Tokens) -> String {
         // +-*/=%;:,.({<[]>})&|!?"'\
         match token {
-            Tokens::Operator(Operators::Add) => "+".to_string(),
-            Tokens::Operator(Operators::Sub) => "-".to_string(),
-            Tokens::Operator(Operators::Mul) => "*".to_string(),
-            Tokens::Operator(Operators::Div) => "/".to_string(),
+            Tokens::Operator(Operators::Plus) => "+".to_string(),
+            Tokens::Operator(Operators::Minus) => "-".to_string(),
+            Tokens::Operator(Operators::Star) => "*".to_string(),
+            Tokens::Operator(Operators::Slash) => "/".to_string(),
             Tokens::Operator(Operators::Equal) => "=".to_string(),
             Tokens::Operator(Operators::Mod) => "%".to_string(),
             Tokens::Operator(Operators::And) => "&&".to_string(),
@@ -112,26 +123,19 @@ pub mod tokenizer {
             _ => "".to_string(),
         }
     }
-    fn compare(original: &mut usize, compared: Option<usize>) {
-        if let Some(compared) = compared {
-            if compared < *original {
-                *original = compared
+    pub fn find_ws_str(expression: &[u8], tokens_str: &str) -> usize {
+        let mut idx = 0;
+
+        for char in expression {
+            if tokens_str.contains(*char as char) || (*char as char).is_whitespace() {
+                break;
             }
+            idx +=1;
         }
-    }
-    pub fn find_ws_str(expression: &str, str: &str) -> usize {
-        let idx = {
-            let mut lowest_idx = expression.len();
-            for char in str.chars() {
-                compare(&mut lowest_idx, expression.find(char));
-            }
-            compare(&mut lowest_idx, expression.find(char::is_whitespace));
-            lowest_idx
-        };
         idx
     }
     /// "+-*/=%;:,.({<[]>})&|!?\"'\\"
-    #[derive(Debug, PartialEq, Clone, Eq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub enum Tokens {
         /// opening 0, closing 1
         Parenteses(bool),
@@ -152,21 +156,23 @@ pub mod tokenizer {
         Space,
         /// content
         String(String),
-        Char(char),
+        Whitespace(String),
         /// in case we can not identify token at the moment
         Text(String),
         DoubleColon,
-        Number(usize, usize, char),
+        Number(usize, f64, char),
         Tab,
         Pipe,
         Ampersant,
+        Deleted,
+        EndOfFile,
     }
     #[derive(Debug, PartialEq, Clone, Copy, Eq)]
     pub enum Operators {
-        Add,
-        Sub,
-        Mul,
-        Div,
+        Plus,
+        Minus,
+        Star,
+        Slash,
         Mod,
         AddEq,
         SubEq,
@@ -183,113 +189,3 @@ pub mod tokenizer {
     }
 }
 
-pub mod compiler_data {
-    /// all of the defined types/variables (enum, struct, function) in the current scope will be registered here
-    pub struct Dictionary {
-        pub functions: Vec<Function>,
-        pub enums: Vec<Enum>,
-        pub structs: Vec<Struct>,
-        pub variables: Vec<Variable>,
-        pub identifiers: Vec<(String, Types)>,
-    }
-    pub struct Function {
-        /// function identifiers will be changed to allow for function overload
-        /// name mangler rules: "{identifier}:{args.foreach("{typeof}:")}"
-        /// example:
-        /// fun myFun(n: int, type: char): int
-        /// fun nothing()
-        /// translates to:
-        /// "myFun:int:char"
-        /// "nothing:"
-        pub identifier: String,
-        /// type of args in order
-        pub args: Vec<Types>,
-        /// size needed to allocate on stack while function call (args.len() included)
-        pub stack_size: Option<usize>,
-        /// location in bytecode, so runtime knows where to jump
-        pub location: Option<usize>,
-        pub return_type: Types,
-        /// location in source code
-        pub src_loc: usize,
-        /// point
-        /// Rusty danda specific feature lets you jump to a specific place in a function
-        /// fun foo(a:int, b:int) {
-        ///     // do something with variable a
-        ///     'initialized(b: int);
-        ///     // do something with variable b only
-        /// }
-        /// foo(1, 2); // normal call
-        /// foo'initialized(2) // call from point 'initialized
-        /// disclaimer: I am fully aware that this feature goes against a lot of good practices.
-        /// I just want to offer some flexibility for my language.
-        /// identifier, location, source location
-        pub points: Vec<(String, usize, usize)>,
-    }
-    pub struct Enum {
-        pub identifier: String,
-        /// enum values and their offset
-        /// enum ErrCode { Continue = 100, SwitchingProtocols, ..., Ok = 200, ... }
-        pub keys: Vec<(String, usize)>,
-        /// location in source code
-        pub src_loc: usize,
-        pub methods: Vec<Function>,
-    }
-    pub struct Struct {
-        pub identifier: String,
-        pub keys: Vec<(String, Types)>,
-        /// location in source code
-        pub src_loc: usize,
-        pub methods: Vec<Function>,
-    }
-    pub struct Variable {
-        pub kind: Types,
-        pub identifier: String,
-    }
-    /// identifiers can not contain these characters: + - * / = % ; : , . ({<[]>}) & | ! ? " '
-    /// map: let i: Int = 32; i = i + 63;
-    ///     - match {keyword? => keyword(?), value? => value(?)} => keyword(let), identifier("i"), match {: => Type, = => None} => Type(Int), operator(=), value(32);
-    ///     - match {keyword? => keyword(?), value? => value} => value, value("i"), operator(=), value("i"), operator(+), value(63);
-    pub enum Types {
-        Int,
-        Float,
-        Usize,
-        Char,
-        Byte,
-        Bool,
-        Null,
-        /// refference type
-        Pointer(Box<Types>),
-        /// type of an array, lenght
-        Array(Box<Types>, usize),
-        /// non-primmitive types holding their identifiers
-        Function(String),
-        Enum(String),
-        Struct(String),
-    }
-    impl Dictionary {
-        pub fn new() -> Self {
-            Dictionary {
-                functions: vec![],
-                enums: vec![],
-                structs: vec![],
-                variables: vec![],
-                identifiers: vec![],
-            }
-        }
-        fn index_of(&self, identifier: String) -> Option<usize> {
-            let mut i = 0;
-            loop {
-                if i >= self.identifiers.len() {
-                    return None;
-                }
-                if self.identifiers[i].0 == identifier {
-                    return Some(i);
-                }
-                i += 1;
-            }
-        }
-        fn type_of(&self, idx: usize) -> &Types {
-            &self.identifiers[idx].1
-        }
-    }
-}

@@ -1,11 +1,15 @@
 pub mod ast_parser {
+    pub type Tree = HashMap<String, Head>;
+    pub type NodeParameters = HashMap<String, String>;
+    use std::collections::HashMap;
+
     use super::formater::refactor;
     use crate::lexer::tokenizer::*;
-    pub fn generate_ast(source_path: &str) -> Option<Vec<Head>> {
+    pub fn generate_ast(source_path: &str) -> Option<Tree> {
         use std::fs;
         let source =
             fs::read_to_string(source_path).expect("Unexpected problem while opening AST file");
-        let (tokens, mut lines, mut errors) = parse(source, false);
+        let (tokens, mut lines, mut errors) = tokenize(&source.into(), false);
         if let Ok(mut refactored) = refactor(tokens, &mut lines, &mut errors) {
             return Some(analize_tree(&mut refactored));
         } else {
@@ -16,29 +20,27 @@ pub mod ast_parser {
             return None;
         }
     }
-    pub fn analize_input(nodes: &Vec<Head>, lines: Vec<(usize, usize)>, ast: Vec<Head>){
-        
-    }
-    fn analize_tree(tokens: &mut Vec<Tokens>) -> Vec<Head> {
-        let mut tree: Vec<Head> = vec![];
+    fn analize_tree(tokens: &mut Vec<Tokens>) -> Tree {
+        let mut hash_map = HashMap::new();
         let mut idx = 0;
         while let Some(head) = read_head(tokens, &mut idx) {
-            tree.push(head);
+            hash_map.insert(head.name.to_string(), head);
             idx += 1;
         }
-        tree
+        hash_map
     }
     fn read_head(tokens: &mut Vec<Tokens>, idx: &mut usize) -> Option<Head> {
         if tokens.len() == *idx {
             return None;
         }
-        let name = if let Tokens::Text(txt) = &tokens[*idx] {
+        let name = loop {
+            if let Tokens::Text(txt) = &tokens[*idx] {
+                *idx += 1;
+                break txt.to_string()
+        }
             *idx += 1;
-            txt.to_string()
-        } else {
-            return None;
         };
-        let mut parameters = vec![];
+        let mut parameters = Vec::with_capacity(tokens.len() / 100);
         while tokens[*idx] != Tokens::Tab {
             match &tokens[*idx] {
                 Tokens::SquareBracket(closed) => {
@@ -111,15 +113,12 @@ pub mod ast_parser {
         }
         nodes
     }
-    fn get_node_args(tokens: &Vec<Tokens>, idx: &mut usize) -> Vec<NodeParam> {
-        let mut args = vec![];
+    fn get_node_args(tokens: &Vec<Tokens>, idx: &mut usize) -> NodeParameters {
+        let mut args = HashMap::new();
         while let Tokens::Text(name) = &tokens[*idx] {
             *idx += 2;
             if let Tokens::String(value) = &tokens[*idx] {
-                args.push(NodeParam {
-                    name: name.to_string(),
-                    value: value.to_string(),
-                })
+                args.insert(name.to_string(), value.to_string());
             }
             *idx += 1;
         }
@@ -132,14 +131,11 @@ pub mod ast_parser {
         }
         count
     }
-    struct Output {
-        
-    }
     #[derive(Debug)]
     pub struct Head {
-        name: String,
-        parameters: Vec<HeadParam>,
-        nodes: Vec<NodeType>,
+        pub name: String,
+        pub parameters: Vec<HeadParam>,
+        pub nodes: Vec<NodeType>,
     }
     #[derive(Debug)]
     pub enum HeadParam {
@@ -148,9 +144,9 @@ pub mod ast_parser {
     }
     #[derive(Debug)]
     pub struct Node {
-        kind: Tokens,
-        arguments: Vec<NodeParam>,
-        nodes: Vec<NodeType>,
+        pub kind: Tokens,
+        pub arguments: NodeParameters,
+        pub nodes: Vec<NodeType>,
     }
     #[derive(Debug)]
     pub enum NodeType {
@@ -160,21 +156,16 @@ pub mod ast_parser {
         ArgsCondition(ArgsCon),
     }
     #[derive(Debug)]
-    pub struct NodeParam {
-        name: String,
-        value: String,
-    }
-    #[derive(Debug)]
     pub struct ArgsCon {
-        params: Vec<NodeParam>,
-        nodes: Vec<NodeType>,
+        pub params: NodeParameters,
+        pub nodes: Vec<NodeType>,
     }
 }
 
 mod formater {
     use crate::{
         lexer::tokenizer::{/*Keywords,*/ deparse_token, Operators, Tokens},
-        token_refactor::{parse_err::Errors, refactorer::LexingErr},
+        lexing_preprocessor::{parse_err::Errors, lexing_preprocessor::LexingErr},
     };
 
     pub fn refactor(
@@ -239,7 +230,9 @@ mod formater {
                                 return 1;
                             };
                             if let Tokens::Text(txt2) = &tokens[idx + 2] {
-                                if let Ok(num2) = txt2.parse::<usize>() {
+                                let mut float = String::from("0.");
+                                float.push_str(txt2);
+                                if let Ok(num2) = float.parse::<f64>() {
                                     tokens[idx] = Tokens::Number(first_num, num2, 'f');
                                     tokens.remove(idx + 1);
                                     tokens.remove(idx + 1);
@@ -260,7 +253,7 @@ mod formater {
                         } else {
                             if bytes[bytes.len() - 1].is_ascii_digit() {
                                 if let Ok(num) = txt.parse::<usize>() {
-                                    tokens[idx] = Tokens::Number(num, 0, 'i')
+                                    tokens[idx] = Tokens::Number(num, 0f64, 'i')
                                 } else {
                                     errors.push(Errors::InvalidNumber(lines[idx], txt.to_string()));
                                     // syntax err: incorrect number
@@ -268,7 +261,7 @@ mod formater {
                             } else {
                                 if let Ok(num) = txt[..txt.len() - 1].parse::<usize>() {
                                     tokens[idx] =
-                                        Tokens::Number(num, 0, bytes[bytes.len() - 1] as char)
+                                        Tokens::Number(num, 0f64, bytes[bytes.len() - 1] as char)
                                 } else {
                                     errors.push(Errors::InvalidNumber(lines[idx], txt.to_string()));
                                     // syntax err: incorrect number
@@ -284,6 +277,11 @@ mod formater {
                         return 1;
                     }
                 }
+                lines.remove(idx);
+                tokens.remove(idx);
+                return 0;
+            }
+            Tokens::Whitespace(txt) => {
                 if txt == "\t" {
                     tokens[idx] = Tokens::Tab;
                     return 1;
@@ -292,29 +290,43 @@ mod formater {
                 tokens.remove(idx);
                 return 0;
             }
+            Tokens::Pipe => {
+                if let Tokens::Pipe = tokens[idx + 1] {
+                    tokens[idx] = Tokens::Operator(Operators::Or);
+                    tokens.remove(idx + 1);
+                    lines.remove(idx + 1);
+                }
+            }
+            Tokens::Ampersant => {
+                if let Tokens::Ampersant = tokens[idx + 1] {
+                    tokens[idx] = Tokens::Operator(Operators::And);
+                    tokens.remove(idx + 1);
+                    lines.remove(idx + 1);
+                }
+            }
             Tokens::Operator(op) => match op {
-                Operators::Add => {
+                Operators::Plus => {
                     if let Tokens::Operator(Operators::Equal) = tokens[idx + 1] {
                         tokens[idx] = Tokens::Operator(Operators::AddEq);
                         tokens.remove(idx + 1);
                         lines.remove(idx + 1);
                     }
                 }
-                Operators::Sub => {
+                Operators::Minus => {
                     if let Tokens::Operator(Operators::Equal) = tokens[idx + 1] {
                         tokens[idx] = Tokens::Operator(Operators::SubEq);
                         tokens.remove(idx + 1);
                         lines.remove(idx + 1);
                     }
                 }
-                Operators::Mul => {
+                Operators::Star => {
                     if let Tokens::Operator(Operators::Equal) = tokens[idx + 1] {
                         tokens[idx] = Tokens::Operator(Operators::MulEq);
                         tokens.remove(idx + 1);
                         lines.remove(idx + 1);
                     }
                 }
-                Operators::Div => {
+                Operators::Slash => {
                     if let Tokens::Operator(Operators::Equal) = tokens[idx + 1] {
                         tokens[idx] = Tokens::Operator(Operators::DivEq);
                         tokens.remove(idx + 1);

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Instructions","complete list of runtime instructions"],["PointerTypes","runtime "],["Types",""]],"struct":[["CallStack","holds information of where to jump after function call ends"],["Context","context for a single thread of execution (may include multiple threads in future updates)"],["HeapRegistry","a structure used to register data on heap"]]});

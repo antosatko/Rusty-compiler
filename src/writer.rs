@@ -74,39 +74,58 @@ pub mod writer {
     }
     pub fn instr_to_str(instr: Instructions) -> String {
         use Instructions::*;
+        macro_rules! bin_instr {
+            ($code: literal) => {
+                format!("{}", $code as char)
+            };
+            ($code: literal, ($n: ident, $bytes: literal)) => {
+                format!("{}{}", $code as char, num_to_hbytes($n, $bytes))
+            };
+            ($code: literal, ($n: ident, $bytes: literal), ($n1: ident, $bytes1: literal)) => {
+                format!(
+                    "{}{}{}",
+                    $code as char,
+                    num_to_hbytes($n, $bytes),
+                    num_to_hbytes($n1, $bytes1)
+                )
+            };
+        }
         match instr {
-            Wr(n) => format!("{}{}", 65 as char, num_to_hbytes(n, 2)),
-            Rd(n, n1) => format!("{}{}{}", 66 as char, num_to_hbytes(n, 2), num_to_hbytes(n1, 1)),
-            Wrp(n, n1) => format!("{}{}{}", 67 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
-            Rdp(n, n1) => format!("{}{}{}", 68 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
-            Rdc(n, n1) => format!("{}{}{}", 69 as char, num_to_hbytes(n, 2), num_to_hbytes(n1, 1)),
-            Ptr(n) => format!("{}{}", 70 as char, num_to_hbytes(n, 2)),
-            Alc(n, n1) => format!("{}{}{}", 71 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
-            Goto(n) => format!("{}{}", 72 as char, num_to_hbytes(n, 4)),
-            Brnc(n, n1) => format!("{}{}{}", 73 as char, num_to_hbytes(n, 4), num_to_hbytes(n1, 4)),
-            Ret => format!("{}", 74 as char),
-            Res(n) => format!("{}{}", 75 as char, num_to_hbytes(n, 2)),
-            Mov(n, n1) => format!("{}{}{}", 76 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
-            Add => format!("{}", 77 as char),
-            Sub => format!("{}", 78 as char),
-            Mul => format!("{}", 79 as char),
-            Div => format!("{}", 80 as char),
-            Mod => format!("{}", 81 as char),
-            Equ => format!("{}", 82 as char),
-            Grt => format!("{}", 83 as char),
-            And => format!("{}", 84 as char),
-            Or => format!("{}", 85 as char),
-            Not => format!("{}", 86 as char),
-            Cal(n, n1) => format!("{}{}{}", 87 as char, num_to_hbytes(n, 3), num_to_hbytes(n1, 2)),
-            End => format!("{}", 88 as char),
-            Dalc(n) => format!("{}{}", 89 as char, num_to_hbytes(n, 1)),
-            RAlc(n, n1) => format!("{}{}{}", 90 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
-            Idx(n, n1) => format!("{}{}{}", 91 as char, num_to_hbytes(n, 1), num_to_hbytes(n1, 1)),
-            Repp(n) => format!("{}{}", 92 as char, num_to_hbytes(n, 1)),
-            Less => format!("{}", 93 as char),
-            Debug(n) => format!("{}{}", 94 as char, num_to_hbytes(n, 1)),
-            Gotop(n) => format!("{}{}", 95 as char, num_to_hbytes(n, 4)),
-            RRet => format!("{}", 96 as char),
+            Wr(n) => bin_instr!(65, (n, 2)),
+            Rd(n, n1) => bin_instr!(66, (n, 2), (n1, 1)),
+            Wrp(n, n1) => bin_instr!(67, (n, 1), (n1, 1)),
+            Rdp(n, n1) => bin_instr!(68, (n, 1), (n1, 1)),
+            Rdc(n, n1) => bin_instr!(69, (n, 2), (n1, 1)),
+            Ptr(n) => bin_instr!(70, (n, 2)),
+            Alc(n, n1) => bin_instr!(71, (n, 1), (n1, 1)),
+            Goto(n) => bin_instr!(72, (n, 4)),
+            Brnc(n, n1) => bin_instr!(73, (n, 4), (n1, 4)),
+            Ret => bin_instr!(74),
+            Res(n) => bin_instr!(75, (n, 2)),
+            Mov(n, n1) => bin_instr!(76, (n, 1), (n1, 1)),
+            Add => bin_instr!(77),
+            Sub => bin_instr!(78),
+            Mul => bin_instr!(79),
+            Div => bin_instr!(80),
+            Mod => bin_instr!(81),
+            Equ => bin_instr!(82),
+            Grt => bin_instr!(83),
+            And => bin_instr!(84),
+            Or => bin_instr!(85),
+            Not => bin_instr!(86),
+            Cal(n, n1) => bin_instr!(87, (n, 3), (n1, 2)),
+            End => bin_instr!(88),
+            Dalc(n) => bin_instr!(89, (n, 1)),
+            RAlc(n, n1) => bin_instr!(90, (n, 1), (n1, 1)),
+            Idx(n, n1) => bin_instr!(91, (n, 1), (n1, 1)),
+            Repp(n) => bin_instr!(92, (n, 1)),
+            Less => bin_instr!(93),
+            Debug(n) => bin_instr!(94, (n, 1)),
+            Gotop(n) => bin_instr!(95, (n, 4)),
+            RRet => bin_instr!(96),
+            Cast(n, n1) => bin_instr!(97, (n, 1), (n1, 1)),
+            Len(n) => bin_instr!(98, (n, 1)),
+            Type(n, n1) => bin_instr!(99, (n, 1), (n1, 1)),
         }
     }
     pub fn num_to_hbytes(num: usize, bytes: u8) -> String {
@@ -116,6 +135,7 @@ pub mod writer {
             3 => format!("{:3x}", num),
             4 => format!("{:4x}", num),
             _ => panic!("{}", bytes),
-        }.replace(" ", "0")
+        }
+        .replace(" ", "0")
     }
 }
