@@ -45,11 +45,16 @@ Compiler specific Element arguments:
 To create own arguments just pass them to the structure 
 
 
-
-_type parent [children                                             | 1. Head | parameters: parent children(array)
+"
+examples:
+HashMap<String, Client>                                            | comment | parser ignores anything that is not text
+int                                                                          | so you can use strings as comments
+Vec<Vec<Pixel>>
+"
+type parent [children                                              | 1. Head | parameters: parent children(array)
 	identifier set="parent"                                        | 2. Body | expected text
 	< ?                                                            |         | optional element
-		_type set="children"                                       |         |     expected structure
+		type set="children"                                        |         |     expected structure
 		, ?                                                        |         |     optional element
-			_type set="children" back="1"                          |         |         expected structure
+			type set="children" back="1"                           |         |         expected structure
 	>;                                                             |         | expected element + end
