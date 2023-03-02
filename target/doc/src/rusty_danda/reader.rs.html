@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\reader.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>reader.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rusty_danda/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../rusty_danda/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rusty_danda/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src\reader.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>reader.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../rusty_danda/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -142,145 +137,146 @@
 <span id="137">137</span>
 <span id="138">138</span>
 <span id="139">139</span>
-</pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">reader</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::runtime::runtime_types</span>::{<span class="self">self</span>, <span class="ident">Context</span>, <span class="ident">Instructions</span>, <span class="ident">Types</span>};
-    <span class="kw">use</span> <span class="ident">std::fs::File</span>;
-    <span class="kw">use</span> <span class="ident">std::io::prelude</span>::<span class="kw-2">*</span>;
-    <span class="kw">struct</span> <span class="ident">Reader</span> {
-        <span class="ident">pos</span>: <span class="ident">usize</span>,
-        <span class="ident">ctx</span>: <span class="ident">runtime_types::Context</span>,
-        <span class="ident">file</span>: <span class="ident">String</span>,
+<span id="140">140</span>
+</pre><pre class="rust"><code><span class="kw">pub mod </span>reader {
+    <span class="kw">use </span><span class="kw">crate</span>::runtime::runtime_types::{<span class="self">self</span>, Context, Instructions, Types};
+    <span class="kw">use </span>std::fs::File;
+    <span class="kw">use </span>std::io::prelude::<span class="kw-2">*</span>;
+    <span class="kw">struct </span>Reader {
+        pos: usize,
+        ctx: runtime_types::Context,
+        file: String,
     }
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_file</span>(<span class="ident">path</span>: <span class="ident">String</span>, <span class="ident">context</span>: <span class="ident">Context</span>) -&gt; <span class="ident">Context</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">Reader::new</span>(<span class="ident">context</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">file</span> <span class="op">=</span>
-            <span class="ident">File::open</span>(<span class="ident">path</span>.<span class="ident">to_owned</span>()).<span class="ident">expect</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;File not found. ({})&quot;</span>, <span class="ident">path</span>).<span class="ident">to_owned</span>());
-        <span class="ident">file</span>.<span class="ident">read_to_string</span>(<span class="kw-2">&amp;mut</span> <span class="ident">reader</span>.<span class="ident">file</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;neco se pokazilo&quot;</span>);
-        <span class="kw">while</span> <span class="ident">reader</span>.<span class="ident">file</span>.<span class="ident">as_bytes</span>()[<span class="ident">reader</span>.<span class="ident">pos</span>] <span class="op">!</span><span class="op">=</span> <span class="string">&#39;?&#39;</span> <span class="kw">as</span> <span class="ident">u8</span> {
-            <span class="ident">reader</span>.<span class="ident">push_consts</span>();
+    <span class="kw">pub fn </span>read_file(path: String, context: Context) -&gt; Context {
+        <span class="kw">let </span><span class="kw-2">mut </span>reader = Reader::new(context);
+        <span class="kw">let </span><span class="kw-2">mut </span>file =
+            File::open(path.to_owned()).expect(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;File not found. ({})&quot;</span>, path).to_owned());
+        file.read_to_string(<span class="kw-2">&amp;mut </span>reader.file)
+            .expect(<span class="string">&quot;neco se pokazilo&quot;</span>);
+        <span class="kw">while </span>reader.file.as_bytes()[reader.pos] != <span class="string">&#39;?&#39; </span><span class="kw">as </span>u8 {
+            reader.push_consts();
         }
-        <span class="ident">reader</span>.<span class="ident">pos</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-        <span class="kw">while</span> <span class="ident">reader</span>.<span class="ident">file</span>.<span class="ident">as_bytes</span>()[<span class="ident">reader</span>.<span class="ident">pos</span>] <span class="op">!</span><span class="op">=</span> <span class="string">&#39;?&#39;</span> <span class="kw">as</span> <span class="ident">u8</span> {
-            <span class="ident">reader</span>.<span class="ident">push_instruction</span>();
+        reader.pos += <span class="number">1</span>;
+        <span class="kw">while </span>reader.file.as_bytes()[reader.pos] != <span class="string">&#39;?&#39; </span><span class="kw">as </span>u8 {
+            reader.push_instruction();
         }
-        <span class="ident">reader</span>.<span class="ident">ctx</span>.<span class="ident">code</span>.<span class="ident">push</span>(<span class="ident">Instructions::End</span>);
-        <span class="ident">reader</span>.<span class="ident">ctx</span>
+        reader.ctx.code.push(Instructions::End);
+        reader.ctx
     }
-    <span class="kw">impl</span> <span class="ident">Reader</span> {
-        <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">ctx</span>: <span class="ident">Context</span>) -&gt; <span class="self">Self</span> {
-            <span class="ident">Reader</span> {
-                <span class="ident">file</span>: <span class="ident">String::from</span>(<span class="string">&quot;&quot;</span>),
-                <span class="ident">pos</span>: <span class="number">0</span>,
-                <span class="ident">ctx</span>,
+    <span class="kw">impl </span>Reader {
+        <span class="kw">fn </span>new(ctx: Context) -&gt; <span class="self">Self </span>{
+            Reader {
+                file: String::from(<span class="string">&quot;&quot;</span>),
+                pos: <span class="number">0</span>,
+                ctx,
             }
         }
-        <span class="kw">fn</span> <span class="ident">push_consts</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-            <span class="self">self</span>.<span class="ident">pos</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-            <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">file</span>.<span class="ident">as_bytes</span>()[<span class="self">self</span>.<span class="ident">pos</span> <span class="op">-</span> <span class="number">1</span>] {
-                <span class="number">65</span> =&gt; {
-                    <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">read_bytes</span>(<span class="number">8</span>) <span class="kw">as</span> <span class="ident">u32</span>;
-                    <span class="kw">let</span> <span class="ident">int</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">std::mem::transmute</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">i32</span><span class="op">&gt;</span>(<span class="ident">bytes</span>) };
-                    <span class="ident">Types::Int</span>(<span class="ident">int</span>)
+        <span class="kw">fn </span>push_consts(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+            <span class="self">self</span>.pos += <span class="number">1</span>;
+            <span class="kw">let </span>value = <span class="kw">match </span><span class="self">self</span>.file.as_bytes()[<span class="self">self</span>.pos - <span class="number">1</span>] {
+                <span class="number">65 </span>=&gt; {
+                    <span class="kw">let </span>bytes = <span class="self">self</span>.read_bytes(<span class="number">8</span>) <span class="kw">as </span>u32;
+                    <span class="kw">let </span>int = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;u32, i32&gt;(bytes) };
+                    Types::Int(int)
                 }
-                <span class="number">66</span> =&gt; {
-                    <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">read_bytes</span>(<span class="number">16</span>) <span class="kw">as</span> <span class="ident">u64</span>;
-                    <span class="kw">let</span> <span class="ident">float</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">std::mem::transmute</span>::<span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">f64</span><span class="op">&gt;</span>(<span class="ident">bytes</span>) };
-                    <span class="ident">Types::Float</span>(<span class="ident">float</span>)
+                <span class="number">66 </span>=&gt; {
+                    <span class="kw">let </span>bytes = <span class="self">self</span>.read_bytes(<span class="number">16</span>) <span class="kw">as </span>u64;
+                    <span class="kw">let </span>float = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;u64, f64&gt;(bytes) };
+                    Types::Float(float)
                 }
-                <span class="number">67</span> =&gt; <span class="ident">Types::Byte</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">2</span>) <span class="kw">as</span> <span class="ident">u8</span>),
-                <span class="number">68</span> =&gt; <span class="ident">Types::Char</span>((<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">2</span>) <span class="kw">as</span> <span class="ident">u8</span>) <span class="kw">as</span> <span class="ident">char</span>),
-                <span class="number">69</span> =&gt; <span class="ident">Types::Usize</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">32</span>)),
-                <span class="number">70</span> =&gt; <span class="ident">Types::Bool</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>),
-                <span class="number">71</span> =&gt; <span class="ident">Types::Null</span>,
-                <span class="number">34</span> =&gt; {
-                    <span class="kw">for</span> <span class="ident">idx</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">read_str_range</span>() {
-                        <span class="self">self</span>.<span class="ident">ctx</span>
-                            .<span class="ident">stack</span>
-                            .<span class="ident">push</span>(<span class="ident">Types::Char</span>(<span class="self">self</span>.<span class="ident">file</span>.<span class="ident">as_bytes</span>()[<span class="ident">idx</span>] <span class="kw">as</span> <span class="ident">char</span>));
+                <span class="number">67 </span>=&gt; Types::Byte(<span class="self">self</span>.read_unumber(<span class="number">2</span>) <span class="kw">as </span>u8),
+                <span class="number">68 </span>=&gt; Types::Char((<span class="self">self</span>.read_unumber(<span class="number">2</span>) <span class="kw">as </span>u8) <span class="kw">as </span>char),
+                <span class="number">69 </span>=&gt; Types::Usize(<span class="self">self</span>.read_unumber(<span class="number">32</span>)),
+                <span class="number">70 </span>=&gt; Types::Bool(<span class="self">self</span>.read_unumber(<span class="number">1</span>) != <span class="number">0</span>),
+                <span class="number">71 </span>=&gt; Types::Null,
+                <span class="number">34 </span>=&gt; {
+                    <span class="kw">for </span>idx <span class="kw">in </span><span class="self">self</span>.read_str_range() {
+                        <span class="self">self</span>.ctx
+                            .stack
+                            .push(Types::Char(<span class="self">self</span>.file.as_bytes()[idx] <span class="kw">as </span>char));
                     }
-                    <span class="self">self</span>.<span class="ident">ctx</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">Types::Char</span>(<span class="string">&#39;\0&#39;</span>));
+                    <span class="self">self</span>.ctx.stack.push(Types::Char(<span class="string">&#39;\0&#39;</span>));
                     <span class="kw">return</span>;
                 }
-                <span class="number">72</span> =&gt; <span class="macro">todo!</span>(<span class="string">&quot;Types::Enum(self.read_unumber(2) as u8)&quot;</span>),
-                <span class="number">73</span> =&gt; <span class="ident">Types::CodePointer</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">32</span>) <span class="kw">as</span> <span class="ident">usize</span>),
-                <span class="kw">_</span> =&gt; {
+                <span class="number">72 </span>=&gt; <span class="macro">todo!</span>(<span class="string">&quot;Types::Enum(self.read_unumber(2) as u8)&quot;</span>),
+                <span class="number">73 </span>=&gt; Types::CodePointer(<span class="self">self</span>.read_unumber(<span class="number">32</span>) <span class="kw">as </span>usize),
+                <span class="kw">_ </span>=&gt; {
                     <span class="macro">panic!</span>(
                         <span class="string">&quot;Unexpected character &#39;{}&#39; at {}.&quot;</span>,
-                        <span class="self">self</span>.<span class="ident">file</span>.<span class="ident">as_bytes</span>()[<span class="self">self</span>.<span class="ident">pos</span>],
-                        <span class="self">self</span>.<span class="ident">pos</span>
+                        <span class="self">self</span>.file.as_bytes()[<span class="self">self</span>.pos],
+                        <span class="self">self</span>.pos
                     )
                 }
             };
-            <span class="self">self</span>.<span class="ident">ctx</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">value</span>);
+            <span class="self">self</span>.ctx.stack.push(value);
         }
-        <span class="doccomment">/// reads next instruction and pushes it to Context::code</span>
-        <span class="kw">fn</span> <span class="ident">push_instruction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-            <span class="self">self</span>.<span class="ident">pos</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-            <span class="kw">let</span> <span class="ident">instruction</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">file</span>.<span class="ident">as_bytes</span>()[<span class="self">self</span>.<span class="ident">pos</span> <span class="op">-</span> <span class="number">1</span>] {
-                <span class="number">65</span> =&gt; <span class="ident">Instructions::Wr</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">2</span>)),
-                <span class="number">66</span> =&gt; <span class="ident">Instructions::Rd</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">2</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">67</span> =&gt; <span class="ident">Instructions::Wrp</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">68</span> =&gt; <span class="ident">Instructions::Rdp</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">69</span> =&gt; <span class="ident">Instructions::Rdc</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">2</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">70</span> =&gt; <span class="ident">Instructions::Ptr</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">2</span>)),
-                <span class="number">71</span> =&gt; <span class="ident">Instructions::Alc</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">72</span> =&gt; <span class="ident">Instructions::Goto</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">4</span>)),
-                <span class="number">73</span> =&gt; <span class="ident">Instructions::Brnc</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">4</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">4</span>)),
-                <span class="number">74</span> =&gt; <span class="ident">Instructions::Ret</span>,
-                <span class="number">75</span> =&gt; <span class="ident">Instructions::Res</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">2</span>)),
-                <span class="number">76</span> =&gt; <span class="ident">Instructions::Mov</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">77</span> =&gt; <span class="ident">Instructions::Add</span>,
-                <span class="number">78</span> =&gt; <span class="ident">Instructions::Sub</span>,
-                <span class="number">79</span> =&gt; <span class="ident">Instructions::Mul</span>,
-                <span class="number">80</span> =&gt; <span class="ident">Instructions::Div</span>,
-                <span class="number">81</span> =&gt; <span class="ident">Instructions::Mod</span>,
-                <span class="number">82</span> =&gt; <span class="ident">Instructions::Equ</span>,
-                <span class="number">83</span> =&gt; <span class="ident">Instructions::Grt</span>,
-                <span class="number">84</span> =&gt; <span class="ident">Instructions::And</span>,
-                <span class="number">85</span> =&gt; <span class="ident">Instructions::Or</span>,
-                <span class="number">86</span> =&gt; <span class="ident">Instructions::Not</span>,
-                <span class="number">87</span> =&gt; <span class="ident">Instructions::Cal</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">3</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">2</span>)),
-                <span class="number">88</span> =&gt; <span class="ident">Instructions::End</span>,
-                <span class="number">89</span> =&gt; <span class="ident">Instructions::Dalc</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">90</span> =&gt; <span class="ident">Instructions::RAlc</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">91</span> =&gt; <span class="ident">Instructions::Idx</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>), <span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">92</span> =&gt; <span class="ident">Instructions::Repp</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">93</span> =&gt; <span class="ident">Instructions::Less</span>,
-                <span class="number">94</span> =&gt; <span class="ident">Instructions::Debug</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="number">95</span> =&gt; <span class="ident">Instructions::Gotop</span>(<span class="self">self</span>.<span class="ident">read_unumber</span>(<span class="number">1</span>)),
-                <span class="kw">_</span> =&gt; {
+        <span class="doccomment">/// reads next instruction and pushes it to Context::code
+        </span><span class="kw">fn </span>push_instruction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+            <span class="self">self</span>.pos += <span class="number">1</span>;
+            <span class="kw">let </span>instruction = <span class="kw">match </span><span class="self">self</span>.file.as_bytes()[<span class="self">self</span>.pos - <span class="number">1</span>] {
+                <span class="number">65 </span>=&gt; Instructions::Wr(<span class="self">self</span>.read_unumber(<span class="number">2</span>)),
+                <span class="number">66 </span>=&gt; Instructions::Rd(<span class="self">self</span>.read_unumber(<span class="number">2</span>), <span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">67 </span>=&gt; Instructions::Wrp(<span class="self">self</span>.read_unumber(<span class="number">1</span>), <span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">68 </span>=&gt; Instructions::Rdp(<span class="self">self</span>.read_unumber(<span class="number">1</span>), <span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">69 </span>=&gt; Instructions::Rdc(<span class="self">self</span>.read_unumber(<span class="number">2</span>), <span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">70 </span>=&gt; Instructions::Ptr(<span class="self">self</span>.read_unumber(<span class="number">2</span>)),
+                <span class="number">71 </span>=&gt; Instructions::Alc(<span class="self">self</span>.read_unumber(<span class="number">1</span>), <span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">72 </span>=&gt; Instructions::Goto(<span class="self">self</span>.read_unumber(<span class="number">4</span>)),
+                <span class="number">73 </span>=&gt; Instructions::Brnc(<span class="self">self</span>.read_unumber(<span class="number">4</span>), <span class="self">self</span>.read_unumber(<span class="number">4</span>)),
+                <span class="number">74 </span>=&gt; Instructions::Ret,
+                <span class="number">75 </span>=&gt; Instructions::Res(<span class="self">self</span>.read_unumber(<span class="number">2</span>)),
+                <span class="number">76 </span>=&gt; Instructions::Mov(<span class="self">self</span>.read_unumber(<span class="number">1</span>), <span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">77 </span>=&gt; Instructions::Add,
+                <span class="number">78 </span>=&gt; Instructions::Sub,
+                <span class="number">79 </span>=&gt; Instructions::Mul,
+                <span class="number">80 </span>=&gt; Instructions::Div,
+                <span class="number">81 </span>=&gt; Instructions::Mod,
+                <span class="number">82 </span>=&gt; Instructions::Equ,
+                <span class="number">83 </span>=&gt; Instructions::Grt,
+                <span class="number">84 </span>=&gt; Instructions::And,
+                <span class="number">85 </span>=&gt; Instructions::Or,
+                <span class="number">86 </span>=&gt; Instructions::Not,
+                <span class="number">87 </span>=&gt; Instructions::Cal(<span class="self">self</span>.read_unumber(<span class="number">3</span>), <span class="self">self</span>.read_unumber(<span class="number">2</span>)),
+                <span class="number">88 </span>=&gt; Instructions::End,
+                <span class="number">89 </span>=&gt; Instructions::Dalc(<span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">90 </span>=&gt; Instructions::RAlc(<span class="self">self</span>.read_unumber(<span class="number">1</span>), <span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">91 </span>=&gt; Instructions::Idx(<span class="self">self</span>.read_unumber(<span class="number">1</span>), <span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">92 </span>=&gt; Instructions::Repp(<span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">93 </span>=&gt; Instructions::Less,
+                <span class="number">94 </span>=&gt; Instructions::Debug(<span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">95 </span>=&gt; Instructions::Gotop(<span class="self">self</span>.read_unumber(<span class="number">1</span>)),
+                <span class="number">96 </span>=&gt; Instructions::RRet,
+                <span class="kw">_ </span>=&gt; {
                     <span class="macro">panic!</span>(
                         <span class="string">&quot;Unexpected character &#39;{}&#39; at {}.&quot;</span>,
-                        <span class="self">self</span>.<span class="ident">file</span>.<span class="ident">as_bytes</span>()[<span class="self">self</span>.<span class="ident">pos</span>],
-                        <span class="self">self</span>.<span class="ident">pos</span>
+                        <span class="self">self</span>.file.as_bytes()[<span class="self">self</span>.pos],
+                        <span class="self">self</span>.pos
                     )
                 }
             };
-            <span class="self">self</span>.<span class="ident">ctx</span>.<span class="ident">code</span>.<span class="ident">push</span>(<span class="ident">instruction</span>);
+            <span class="self">self</span>.ctx.code.push(instruction);
         }
-        <span class="kw">fn</span> <span class="ident">read_str_range</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">std::ops::Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">file</span>.<span class="ident">as_bytes</span>();
-            <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pos</span>;
-            <span class="kw">while</span> <span class="ident">bytes</span>[<span class="self">self</span>.<span class="ident">pos</span>] <span class="op">!</span><span class="op">=</span> <span class="string">&#39;&quot;&#39;</span> <span class="kw">as</span> <span class="ident">u8</span> {
-                <span class="self">self</span>.<span class="ident">pos</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+        <span class="kw">fn </span>read_str_range(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; std::ops::Range&lt;usize&gt; {
+            <span class="kw">let </span>bytes = <span class="self">self</span>.file.as_bytes();
+            <span class="kw">let </span>start = <span class="self">self</span>.pos;
+            <span class="kw">while </span>bytes[<span class="self">self</span>.pos] != <span class="string">&#39;&quot;&#39; </span><span class="kw">as </span>u8 {
+                <span class="self">self</span>.pos += <span class="number">1</span>;
             }
-            <span class="self">self</span>.<span class="ident">pos</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-            <span class="ident">start</span>..(<span class="self">self</span>.<span class="ident">pos</span> <span class="op">-</span> <span class="number">1</span>)
+            <span class="self">self</span>.pos += <span class="number">1</span>;
+            start..(<span class="self">self</span>.pos - <span class="number">1</span>)
         }
-        <span class="kw">fn</span> <span class="ident">read_bytes</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="ident">u128</span> {
-            <span class="kw">let</span> <span class="ident">num</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">file</span>[<span class="self">self</span>.<span class="ident">pos</span>..(<span class="self">self</span>.<span class="ident">pos</span> <span class="op">+</span> <span class="ident">size</span>)];
-            <span class="self">self</span>.<span class="ident">pos</span> <span class="op">+</span><span class="op">=</span> <span class="ident">size</span>;
-            <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">u128::from_str_radix</span>(<span class="ident">num</span>, <span class="number">16</span>).<span class="ident">unwrap</span>();
-            <span class="ident">bytes</span>
+        <span class="kw">fn </span>read_bytes(<span class="kw-2">&amp;mut </span><span class="self">self</span>, size: usize) -&gt; u128 {
+            <span class="kw">let </span>num = <span class="kw-2">&amp;</span><span class="self">self</span>.file[<span class="self">self</span>.pos..(<span class="self">self</span>.pos + size)];
+            <span class="self">self</span>.pos += size;
+            <span class="kw">let </span>bytes = u128::from_str_radix(num, <span class="number">16</span>).unwrap();
+            bytes
         }
-        <span class="kw">fn</span> <span class="ident">read_unumber</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
-            <span class="kw">let</span> <span class="ident">num</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">file</span>[<span class="self">self</span>.<span class="ident">pos</span>..(<span class="self">self</span>.<span class="ident">pos</span> <span class="op">+</span> <span class="ident">size</span>)];
-            <span class="self">self</span>.<span class="ident">pos</span> <span class="op">+</span><span class="op">=</span> <span class="ident">size</span>;
-            <span class="ident">usize::from_str_radix</span>(<span class="ident">num</span>, <span class="number">16</span>).<span class="ident">unwrap</span>()
+        <span class="kw">fn </span>read_unumber(<span class="kw-2">&amp;mut </span><span class="self">self</span>, size: usize) -&gt; usize {
+            <span class="kw">let </span>num = <span class="kw-2">&amp;</span><span class="self">self</span>.file[<span class="self">self</span>.pos..(<span class="self">self</span>.pos + size)];
+            <span class="self">self</span>.pos += size;
+            usize::from_str_radix(num, <span class="number">16</span>).unwrap()
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rusty_danda" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.62.0 (a8314ef7d 2022-06-27)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rusty_danda" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0 (69f9c33d7 2022-12-12)" ></div></body></html>

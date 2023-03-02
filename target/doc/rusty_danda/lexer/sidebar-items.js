@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["compiler",""],["compiler_data",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["tokenizer",""]]};

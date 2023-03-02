@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["ID",""]],"fn":[["test_init",""]]});
+window.SIDEBAR_ITEMS = {"constant":[["ID",""]],"fn":[["test_init",""]]};

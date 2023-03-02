@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["main","commands:"]],"mod":[["lexer",""],["parser",""],["reader",""],["runtime",""],["test",""],["token_refactor",""],["writer",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["main",""]],"mod":[["ast_analyzer",""],["ast_parser",""],["intermediate",""],["lexer",""],["lexing_preprocessor",""],["reader",""],["runtime",""],["test",""],["tree_walker",""],["writer",""]]};

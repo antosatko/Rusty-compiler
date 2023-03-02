@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["read_file",""]],"struct":[["Reader",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["read_file",""]],"struct":[["Reader",""]]};

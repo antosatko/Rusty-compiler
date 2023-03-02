@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AST Documentation</title>
+    <style>
+    body {
+  background-color: #F9F9F9;
+  color: #333;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+pre {
+  background-color: #F5F5F5;
+  border: 1px solid #CCC;
+  border-radius: 5px;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-top: 20px;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+
+code {
+  font-family: Consolas, monospace;
+  font-size: 14px;
+}
+
+p {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+ul {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+li {
+  margin-bottom: 5px;
+}
+
+a {
+  color: #5F9EA0;
+}
+
+a:hover {
+  color: #4682B4;
+}
+
+strong {
+  font-weight: bold;
+}
+
+.em {
+  font-style: italic;
+}
+
+.inline-code {
+  font-family: Consolas, monospace;
+  background-color: #F5F5F5;
+  padding: 2px 5px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+blockquote {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-left: 20px;
+  padding-left: 10px;
+  border-left: 5px solid #DDD;
+}
+
+hr {
+  border: 1px solid #DDD;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+    </style>
+  </head>
+  <body>
+    <h1>AST stands for abstract syntax tree</h1>
+    <p>It is Rusty danda compiler specific structure, you wont find it anywhere else.</p>
+    <p>This file can be considered its documentation.</p>
+    <p>Syntax errors are non-existent at the moment so think twice before writing code. (you might find yourself in an infinite loop :P)</p>
+    <p>Indentation is tabs only (\t), comments are not allowed, each structure must follow a set of rules:</p>
+    <ol>
+      <li>
+        Head - defines appearence of your structure
+        <ul>
+          <li>identifier - structures are accesible by their identifiers</li>
+          <li>parameters - params represent data returned by the structure</li>
+        </ul>
+      </li>
+      <li>
+        Body - defines internal structure of elements
+        <ul>
+          <li>modifiers:
+            <ul>
+              <li>expected element - structure throws an exception if the element is incorrect. Exceptions can be cought by optional elements, compiler reports syntax error if not.</li>
+              <li>optional elements (?) - optionals can nest another elements, these are accesed if the parent element is true</li>
+              <li>commands (!) - commands are executable scripts embedded in compiler. They help to write cleaner, more intelligent code.</li>
+              <li>optional arguments (=) - runs nested code if passed argument is equal</li>
+            </ul>
+          </li>
+          <li>element types:
+            <ul>
+              <li>token (,) - tokens are usually special characters</li>
+              <li>text ("text") - a literal value</li>
+              <li>type ("'string") - types represent only type with any value</li>
+              <li>structure (type) - executes code for specified structure</li>
+            </ul>
+          </li>
+          <li>arguments: small commands for individual elements
+            <ul>
+              <li>type - "=" - value (set="params")</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>End - ends structure definition. Semicolon at the end of last element (last element, NOT the end of branch, always only one end).</li>
+    </ol>
+    <p>Compiler specific Element arguments:</p>
+    <ul>
+      <li>end ('any) - structure returns its current state</li>
+      <li>set (&lt;target&gt;) - head parameter is set/pushed elements return value</li>
+      <li>back (unsigned integer) - code cursor is sent back</li>
+      <li>print (text) - prints to the terminal</li>
+      <li>err (message) - returns error message if node does not fail</li>
+      <li>peek ('any) - token idx wont move forward</li>
+      <li>harderr (bool) - true: any error occuring from now on carries to the prev structure</li>
+      <li>advance (usize) - advances token idx</li>
+      <li>debug ('any) - prints current token</li>
+      <li>data ('identifier) - prints own data</li>
+    </ul>
+    <p>To create own arguments just pass them to the structure.</p>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>demo</title>
+</head>
+<style>
+    body {
+        font-family: "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        background-color: #202a3b;
+        color: #fff;
+        padding: 1rem;
+        text-align: center;
+      }
+      h1 {
+        font-size: 2.5rem;
+        margin-top: 0;
+      }
+      main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 80px);
+        padding: 2rem;
+      }
+      textarea {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        outline: none;
+        padding: 1rem;
+        resize: none;
+        width: 100%;
+        max-width: 500px;
+      }
+      button {
+        background-color: #ff5a5f;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        color: #fff;
+        cursor: pointer;
+        font-size: 1rem;
+        margin-bottom: 2rem;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+        display: block;
+        margin: 0 auto;
+      }
+      button:hover {
+        background-color: #ff4348;
+      }
+      .result {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        font-size: 1rem;
+        margin-bottom: 2rem;
+        outline: none;
+        padding: 1rem;
+        resize: none;
+        width: 100%;
+        max-width: 500px;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2rem 0 1rem 0;
+      }
+      .info {
+        color: #4d4d4d;
+        font-size: 1rem;
+        line-height: 1.5;
+        text-align: justify;
+        max-width: 500px;
+      }
+      code {
+        background-color: #f8f8f8;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        padding: 0.1rem 0.4rem;
+      }
+      img {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-top: 1rem;
+        max-width: 100%;
+      }
+      footer {
+        background-color: #202a3b;
+        color: #fff;
+        padding: 1rem;
+        text-align: center;
+      }
+</style>
+<body>
+    <h1>This is a demo for expression parser</h1>
+    <textarea name="idxx" id="input" cols="30" rows="5"></textarea>
+    <button onclick="btneval()">Evaluate</button>
+    <br>
+    <br>
+    <textarea readonly="true" name="idx" id="out" cols="30" rows="5"></textarea>
+    <br>
+    <br>
+    <h2>How to use</h2>
+    <div>
+        write your expression in the upper text area. you can define variables using "|" <br>
+        variables must be defined as key=value,key=value... do not use any spaces here (I am too tired to fix)
+    </div>
+    <h2>Explanation</h2>
+    <h3>Tokenization</h3>
+    <div>
+        Input is turned into tokens: <br>
+        <code>50 + 60 - (90 * 2.6)</code><br>
+        evaluates to: <br>
+        <code>["50", "+", "60", "-", "(", "90", "*", "2.6", ")"]</code>
+    </div>
+    <h3>Types</h3>
+    <div>
+        we use the tokens generated in prev. step and give them types: <br>
+        <code>[value(50), op(+), value(60), op(-), par[value(90), op(*), value(2.6)]]</code> <br>
+        values inside parenthesis are recursively nested
+    </div>
+    <h3>Grouping</h3>
+    <div>
+        operators are used to group values together, forming a binary tree (i think..) <br>
+        <img src="expressionTree.png" alt="tree">
+    </div>
+    <h3>Evaluation</h3>
+    <div>
+        to be frank I have no idea how tech people call it but it works like this: <br>
+        start at the top (50 + node) if you encounter node, you evaluate it (60 - node) and return result <br>
+        if you follow nodes like this, you get a result because they have to end somewhere <br>
+        and if everything works we should get -124
+    </div>
+    <h2>Limitations</h2>
+    it does not like dumb people, if you write nonsense you get nonsense <br>
+    also expression: <code>5+5 6</code> evaluates to 10 because 6 does not have anyone to group with using operator <br>
+    <code>(5+6)</code> is invalid, because it is the same case as 5+5 6, it would be valid if there was something to group it with <code>(5+6) + 1</code><br>
+    this version is not production ready and never will be, it is just my way of exploring expression parsers
+    <h2>What did I learn</h2>
+    <div>I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. I hate JS. </div>
+</body>
+<script defer>
+    document.getElementById("input").value = localStorage.getItem("in")
+    function btneval(){
+        let _in = document.getElementById("input").value
+        let out = document.getElementById("out")
+        localStorage.setItem("in", _in)
+        let print = ""
+        let split = _in.split(":")
+        let expr = new Expression(split[0], intoVariables(split[1]) || "")
+        let tokens = expr.tokensFromString(_in)
+        let types = expr.typesFromTokens(tokens.result)
+        let tree = expr.treeFromTypes(types.result.values)
+        console.log(tree)
+        print += tokens.printable
+        print += "\n=\n"
+        print += tree.result.value()
+        out.innerHTML = print
+    }
+    function intoVariables (string = ""){
+        console.log(string)
+        let vars = string.split(",")
+        let result = {}
+        for (let i in vars) {
+            let split = vars[i].split("=")
+            result[split[0]] = split[1]
+        }
+        return result
+    }
+
+
+    const TOKENS = " +-*/%()<>=&|"
+    const PARENTHESIS = "()"
+    const OPERATION_ORDER = "/*-+<>=&|"
+    const UNARY = "-"
+    class Operation {
+        constructor(str, left, right) {
+            this.op = str
+            this.left = left
+            this.right = right
+        }
+        value() {
+            switch (this.op) {
+                case "+":
+                    return this.left.value() + this.right.value()
+                case "-":
+                    return this.left.value() - this.right.value()
+                case "*":
+                    return this.left.value() * this.right.value()
+                case "/":
+                    return this.left.value() / this.right.value()
+                case "<":
+                    return this.left.value() < this.right.value()
+                case ">":
+                    return this.left.value() > this.right.value()
+                case "=":
+                    return this.left.value() == this.right.value()
+                case "&":
+                    return this.left.value() && this.right.value()
+                case "|":
+                    return this.left.value() || this.right.value()
+            }
+        }
+    }
+    class Operator {
+        constructor(str) {
+            this.op = str
+        }
+    }
+    class Value {
+        constructor(value, unary, variables) {
+            this.val = value
+            this.unary = unary
+            this.variables = variables
+        }
+        value(){
+            if (isNaN(this.val)){
+                return Number(this.variables[this.val])
+            }
+            return Number(this.val)
+        }
+    }
+    class Parenthesis {
+        constructor(values) {
+            this.values = values
+        }
+        value(){
+            return this.values.value()
+        }
+    }
+    class Expression{
+        constructor(string, variables = {}) {
+            this.src = string
+            this.variables = variables
+        }
+        parse(){
+            let tokens = this.tokensFromString(this.src)
+            let types = this.typesFromTokens(tokens.result)
+            let tree = this.treeFromTypes(types.result.values)
+            return tree.result.value()
+        }
+        treeFromTypes(types) {
+            let result = [...types]
+            for (let op of OPERATION_ORDER) {
+                for (let i = 0; i < result.length; i++) {
+                    if (result[i].constructor.name == "Operator" && result[i].op == op){
+                        if (result[i - 1].constructor.name == "Parenthesis") {
+                            result[i - 1] = new Parenthesis(this.treeFromTypes(result[i - 1].values).result)
+                        }
+                        if (result[i + 1].constructor.name == "Parenthesis") {
+                            result[i + 1] = new Parenthesis(this.treeFromTypes(result[i + 1].values).result)
+                        }
+                        let insert = new Operation(op, result[i - 1], result[i + 1])
+                        result[i] = insert
+                        result.splice(i - 1, 1)
+                        result.splice(i,1)
+                        i -= 1
+                    }
+                }
+            }
+            return { result: result[0], printable: result.join(" ")}
+        }
+        typesFromTokens(tokens, start = 0) {
+            let result = []
+            for (var i = start; i < tokens.length; i++) {
+                if (TOKENS.indexOf(tokens[i]) == -1) {
+                    result.push(new Value(tokens[i], null, this.variables))
+                    continue
+                }
+                if (PARENTHESIS.indexOf(tokens[i]) == -1) {
+                    result.push(new Operator(tokens[i]))
+                    continue
+                }
+                if (tokens[i] == "("){
+                    let newTypes = this.typesFromTokens(tokens, i + 1)
+                    i = newTypes.end
+                    result.push(newTypes.result)
+                    continue
+                }
+                if (tokens[i] == ")") break
+            }
+            return { result:new Parenthesis(result), printable: result.join(" "), end: i}
+        }
+        tokensFromString(string) {
+            let result = []
+            let lastIdx = 0
+            for (let i = 0; i < string.length; i++) {
+                while (TOKENS.indexOf(string[i]) > -1) {
+                    result.push(string.substring(lastIdx, i))
+                    result.push(string[i])
+                    i++
+                    lastIdx = i
+                }
+            }
+            result.push(string.substring(lastIdx))
+            result = result.filter(char => char != " " && char != "")
+            return {result, printable: result.join(" ")}
+        }
+    }
+</script>
+</html>

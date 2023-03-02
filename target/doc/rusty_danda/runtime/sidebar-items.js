@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["runtime",""],["runtime_error",""],["runtime_types",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["runtime_types",""]]};

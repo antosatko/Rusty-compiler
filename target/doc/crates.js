@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["danda_sharp","rusty_danda"];
+window.ALL_CRATES = ["rusty_danda"];

@@ -28,7 +28,7 @@ KWLet identifier type expression
 	type_specifier ? set="type"
 	= ?
 		expression set="expression"
-	;;
+	;?;
 
 
 "
@@ -40,7 +40,7 @@ KWConst identifier type expression
 	type_specifier set="type"
 	=
 	expression set="expression"
-	;;
+	;?;
 
 
 "
@@ -60,12 +60,16 @@ int<float<[int; 50]>>
 etc..
 "
 type main generic ref
-	ref_tok ? set="ref"
+	ref_type ? set="ref"
 	array_decl ? set="main" end="false"
 	type_ident set="main"
 	generic_expr ? set="generic";
 
-type_ident nodes
+ref_type [refs
+	& ? set="refs" back="0"
+	&& ? set="refs" back="1";
+
+type_ident [nodes
 	ident set="nodes"
 	. ? back="1";
 
@@ -83,24 +87,25 @@ array_decl type size
 "
 type danda = int;
 "
-KWType identifier type
+KWType identifier type generic
 	"type" harderr="true"
 	ident set="identifier"
+	generic_decl ? set="generic"
 	=
 	type set="type"
-	;;
+	;?;
 
 
 "
 import ""std.time""; // imagine this with only one ("")
 import ""std.time"" as tm;
 "
-KWImport path alias
+KWImport path identifier
 	"import" harderr="true"
 	"'string" set="path"
 	"as" ?
-		ident set="alias"
-	;;
+		ident set="identifier"
+	;?;
 
 
 "
@@ -167,7 +172,7 @@ break;
 "
 KWBreak expression
 	"break" harderr="true"
-	;;
+	;?;
 
 
 "
@@ -175,7 +180,7 @@ continue;
 "
 KWContinue
 	"continue" harderr="true"
-	;;
+	;?;
 
 
 "
@@ -264,7 +269,8 @@ KWImpl target [traits [methods
 		)
 	; ? end="true"
 	{
-	KWFun ? set="methods" back="0"
+	KWOverload ? set="methods" back="0"
+	KWFun ? set="methods" back="1"
 	};
 
 
@@ -282,7 +288,8 @@ KWTrait identifier parent [methods
 	ident set="parent"
 	)
 	{
-	KWFun ? set="methods" back="0"
+	KWOverload ? set="methods" back="0"
+	KWFun ? set="methods" back="1"
 	};
 
 
@@ -303,6 +310,23 @@ KWFun identifier generic [arguments type code
 	)
 	type_specifier ? set="type"
 	code_block set="code" returnable="true";
+
+
+"
+impl Vec2 {
+	KWOverload + (vec: &Vec2): &Vec2 {
+		yeet new Vec2(self[0] + vec[0], self[1] + vec[1])
+	}
+}
+"
+KWOverload op arg type code
+	"overload" harderr="true"
+	overloadable_op set="op"
+	(
+	arg
+	)
+	type_specifier ? set="type"
+	code_block set="code";
 
 
 "
@@ -334,8 +358,8 @@ generic_decl [identifiers
 	, ? back="1"
 	>;
 
-generic_ident ident [traits
-	ident harderr="true"
+generic_ident identifier [traits
+	ident harderr="true" set="identifier"
 	( ?
 		ident ? set="traits"
 		, ? back="1"
@@ -344,7 +368,7 @@ generic_ident ident [traits
 KWReturn expression
 	"yeet" harderr="true"
 	expression_option ? set="expression" 
-	;;
+	;?;
 	
 arg identifier type
 	ident set="identifier" harderr="true"
@@ -380,7 +404,7 @@ set value operator expression
 	value set="value"
 	set_op set="operator"
 	expression set="expression"
-	;;
+	;?;
 
 set_op op
 	= ? set="op" end="true"
@@ -401,8 +425,22 @@ expression_option [nodes
 	operator ? set="nodes" back="1"
 	free_parenthesis ? set="nodes" back="1";
 
-free_parenthesis parenthesis cast mod
+
+"
+this and expression word was meant to replace current expressions for better validation but 
+"
+expression_updated [nodes
+	expression_word ? set="nodes"
+		operator ? set="nodes" back="1";
+
+expression_word word
+	value ? set="word" end="false"
+	free_parenthesis ? set="word" end="false"
+	"'any" err="";
+
+free_parenthesis parenthesis cast mod unary
 	value_mod ? set="mod"
+	unary_op ? set="unary"
 	parenthesis harderr="true" set="parenthesis"
 	cast ? set="cast";
 
@@ -421,6 +459,28 @@ operator op
 	& ? set="op" end="true"
 	|| ? set="op" end="true"
 	&& ? set="op" end="true"
+	% ? set="op" end="true"
+	"'any" err="";
+
+overloadable_op op
+	< ? set="op" end="true"
+	<= ? set="op" end="true"
+	>= ? set="op" end="true"
+	> ? set="op" end="true"
+	+ ? set="op" end="true"
+	- ? set="op" end="true"
+	* ? set="op" end="true"
+	/ ? set="op" end="true"
+	+= ? set="op" end="true"
+	-= ? set="op" end="true"
+	*= ? set="op" end="true"
+	/= ? set="op" end="true"
+	== ? set="op" end="true"
+	| ? set="op" end="true"
+	& ? set="op" end="true"
+	|| ? set="op" end="true"
+	&& ? set="op" end="true"
+	% ? set="op" end="true"
 	"'any" err="";
 
 parenthesis [expression cast
@@ -429,10 +489,16 @@ parenthesis [expression cast
 	, ? back="1"
 	);
 
-value value
+value value unary
+	unary_op ? set="unary"
 	variable ? set="value" end="false"
 	literal ? set="value" end="false"
 	"'any" err="true";
+
+unary_op op
+	- ? set="op" end="true"
+	! ? set="op" end="true"
+	"'any" err="";
 
 variable [value cast keywords
 	ref_tok ? set="value"
@@ -443,11 +509,16 @@ variable [value cast keywords
 	function_call ? set="value" back="2"
 	cast ? set="cast";
 
+
+"
+struct_builder ? set='value' end='false'
+
+deleted for now, i dont want to have two different ways to create instances
+"
 literal value
 	"'number" ? set="value" end="true"
 	"'string" ? set="value" end="true"
 	array_expr ? set="value" end="false"
-	struct_builder ? set="value" end="false"
 	"'any" err="not a literal value";
 
 struct_field key value

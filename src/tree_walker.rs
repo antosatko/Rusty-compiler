@@ -630,4 +630,20 @@ pub mod tree_walker {
         Array(Vec<Node>),
         Value(Node),
     }
+    impl ArgNodeType {
+        pub fn get_value(&self) -> &Node {
+            if let Self::Value(val) = self {
+                return val
+            }else {
+                panic!()
+            }
+        }
+        pub fn get_array(&self) -> &Vec<Node> {
+            if let Self::Array(val) = self {
+                return val
+            }else {
+                panic!()
+            }
+        }
+    }
 }

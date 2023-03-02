@@ -1,4 +1,4 @@
-var sourcesIndex = {};
-sourcesIndex["danda_sharp"] = {"name":"","files":["compiler.rs","main.rs","reader.rs","runtime.rs","writer.rs"]};
-sourcesIndex["rusty_danda"] = {"name":"","files":["lexer.rs","main.rs","parser.rs","reader.rs","runtime.rs","test.rs","token_refactor.rs","writer.rs"]};
+var sourcesIndex = JSON.parse('{\
+"rusty_danda":["",[],["ast_analyzer.rs","ast_parser.rs","intermediate.rs","lexer.rs","lexing_preprocessor.rs","main.rs","reader.rs","runtime.rs","test.rs","tree_walker.rs","writer.rs"]]\
+}');
 createSourceSidebar();

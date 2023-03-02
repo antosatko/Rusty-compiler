@@ -11,6 +11,7 @@ mod test;
 mod lexing_preprocessor;
 mod tree_walker;
 mod writer;
+mod intermediate;
 
 fn main() {
     let mut args = env::args();
@@ -58,7 +59,16 @@ fn main() {
                 "time: {}",
                 SystemTime::now().duration_since(time).unwrap().as_millis()
             );
-            if true {
+            use intermediate::intermediate;
+            match &parsed_tree {
+                Some(tree) => {
+                    intermediate::from_ast(&tree.nodes);
+                }
+                None => {
+                    panic!("tbh I have no idea what happend, you should never be able to see this. Maybe you are special :) (problem occured while parsing)")
+                }
+            }
+            if false {
                 if let Some(nodes) = &parsed_tree {
                     use tree_walker::tree_walker::ArgNodeType;
                     for nod in &nodes.nodes {
