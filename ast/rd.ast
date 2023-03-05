@@ -259,9 +259,9 @@ impl Danda(Rusty) {
 	fun move(self){}
 }
 "
-KWImpl target [traits [methods
+KWImpl identifier [traits [methods
 	"impl" harderr="true"
-	ident set="target"
+	ident set="identifier"
 	; ? err="impl body not implemented"
 	( ?
 		ident set="traits"
@@ -314,16 +314,17 @@ KWFun identifier generic [arguments type code
 
 "
 impl Vec2 {
-	KWOverload + (vec: &Vec2): &Vec2 {
+	overload + (vec: &Vec2): &Vec2 {
 		yeet new Vec2(self[0] + vec[0], self[1] + vec[1])
 	}
 }
 "
-KWOverload op arg type code
+KWOverload op arg type code generic
 	"overload" harderr="true"
 	overloadable_op set="op"
+	generic_decl ? set="generic"
 	(
-	arg
+	arg set="arg"
 	)
 	type_specifier ? set="type"
 	code_block set="code";
@@ -348,8 +349,8 @@ struct_builder [fields mod type
 	, ? back="1"
 	};
 
-self_arg args
-	& ? set="args"
+self_arg args ref
+	ref_type ? set="ref"
 	"self" set="args";
 
 generic_decl [identifiers
@@ -546,7 +547,8 @@ array_literal [values
 
 ref_tok [tokens
 	* ? set="tokens" back="0"
-	& ? set="tokens" back="1";
+	& ? set="tokens" back="1"
+	&& ? set="tokens" back="2";
 
 generic_expr [types
 	< harderr="true"

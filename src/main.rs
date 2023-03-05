@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 use ast_parser::ast_parser::generate_ast;
 use std::{env, fs::File, hint::black_box, io::Read, time::SystemTime};
 use tree_walker::tree_walker::generate_tree;
@@ -63,6 +65,11 @@ fn main() {
             match &parsed_tree {
                 Some(tree) => {
                     intermediate::from_ast(&tree.nodes);
+                    println!("Dictionary generated.");
+                    println!(
+                        "time: {}",
+                        SystemTime::now().duration_since(time).unwrap().as_millis()
+                    );
                 }
                 None => {
                     panic!("tbh I have no idea what happend, you should never be able to see this. Maybe you are special :) (problem occured while parsing)")

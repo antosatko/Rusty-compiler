@@ -2,7 +2,7 @@ import "std.time" as time
 import "std.window" as win
 
 const S_WIDTH: uint = 650
-const S_HEIGHT: uint = 400 +
+const S_HEIGHT: uint = 400
 
 
 impl Vec2 {
