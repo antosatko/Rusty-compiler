@@ -5,7 +5,7 @@ const S_WIDTH: uint = 650
 const S_HEIGHT: uint = 400
 
 
-impl Vec2 {
+impl Ball {
 	overload *= (vec: &Vec2): &Vec2 {
 		yeet new Vec2(self[0] + vec[0], self[1] + vec[1])
 	}

@@ -141,13 +141,21 @@ pub mod intermediate {
                 let kind_src = step_inside_val(&node, "type_specifier");
                 if let Tokens::Text(txt) = &kind_src.name {
                     let kind = get_type(step_inside_val(kind_src, "type"));
-                    dictionary.variables.push(Variable { kind: Some(kind), identifier, location: 0 })
+                    dictionary.variables.push(Variable {
+                        kind: Some(kind),
+                        identifier,
+                        location: 0,
+                    })
                 }
             }
             "KWConst" => {
                 let identifier = get_ident(&node);
                 let kind = get_type(step_inside_val(&step_inside_val(&node, "type"), "type"));
-                dictionary.constants.push(Constant { kind, identifier, location: 0 })
+                dictionary.constants.push(Constant {
+                    kind,
+                    identifier,
+                    location: 0,
+                })
             }
             _ => {}
         }
@@ -194,7 +202,6 @@ pub mod intermediate {
                                 return;
                             }
                         }
-                        
                     }
                     Some(IdentifierKinds::Type) => {
                         for t in dictionary.types.iter_mut() {
@@ -204,14 +211,9 @@ pub mod intermediate {
                                 return;
                             }
                         }
-                        
                     }
-                    Some(a) => {
-                        errors.push(ErrType::BadImpl(ident.to_string(), a.clone()))
-                    }
-                    None => {
-                        errors.push(ErrType::NonExistentIdentifier(ident.to_string()))
-                    }
+                    Some(a) => errors.push(ErrType::BadImpl(ident.to_string(), a.clone())),
+                    None => errors.push(ErrType::NonExistentIdentifier(ident.to_string())),
                 }
             }
             _ => {}
@@ -560,7 +562,7 @@ pub mod intermediate {
         fn type_of(&self, identifier: &str) -> Option<&IdentifierKinds> {
             for (ident, kind) in &self.identifiers {
                 if ident == identifier {
-                    return Some(kind)
+                    return Some(kind);
                 }
             }
             None

@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Math Expression Evaluation</title>
+    <title>Math Expression Evaluator</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -59,7 +59,7 @@
     </style>
   </head>
   <body>
-    <h1>Math Expression Evaluation</h1>
+    <h1>Math Expression Evaluator</h1>
 	<form>
 		<label for="expression">Enter expression:</label>
 		<input type="text" id="expression" name="expression">
@@ -101,7 +101,7 @@
         let print = ""
         let split = _in.split(":")
         let expr = new Expression(split[0], intoVariables(split[1]) || "")
-        let tokens = expr.tokensFromString(_in)
+        let tokens = expr.tokensFromString(split[0])
         let types = expr.typesFromTokens(tokens.result)
         let tree = expr.treeFromTypes(types.result.values)
         console.log(tree)
