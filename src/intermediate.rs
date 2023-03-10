@@ -21,9 +21,6 @@ pub mod intermediate {
         for node in nodes {
             load_node(node, dictionary, errors);
         }
-        for node in nodes {
-            load_node_second(node, dictionary, errors);
-        }
     }
     fn load_node(node: &Node, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
         let name = if let Tokens::Text(name) = &node.name {
@@ -163,7 +160,7 @@ pub mod intermediate {
             _ => {}
         }
     }
-    fn load_node_second(node: &Node, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
+    /*fn load_node_second(node: &Node, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
         let name = if let Tokens::Text(name) = &node.name {
             name
         } else {
@@ -221,7 +218,7 @@ pub mod intermediate {
             }
             _ => {}
         }
-    }
+    }*/
     fn get_overload_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Overload {
         let operator = get_operator(step_inside_val(&node, "op"));
         let generics = get_generics_decl(&node);
