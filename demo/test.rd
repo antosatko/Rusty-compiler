@@ -1,15 +1,8 @@
 import "std.time" as time
 import "std.window" as win
 
-const S_WIDTH: uint = 650
+pub const S_WIDTH: uint = 650
 const S_HEIGHT: uint = 400
-
-
-impl Ball {
-	overload *= (vec: &Vec2): &Vec2 {
-		yeet new Vec2(self[0] + vec[0], self[1] + vec[1])
-	}
-}
 
 type danda<T(auto), A> = mem.HashMap<Danda.nevim<ahoj>, Danda2>
 
@@ -23,23 +16,6 @@ struct Ball<Generic(tr)> {
     ys: float,
 }
 
-impl Ball {
-    fun constructor(direction: float){
-        self.x = S_WIDTH as float / 2f
-        self.y = S_HEIGHT as float / 2f
-        self.r = 5f
-        self.xs = direction
-        self.ys = 0f
-    }
-    fun move(&self) {
-        self.x += self.xs
-        self.y += self.ys
-    }
-    fun draw(&self, ctx: &win.Window) {
-        ctx.fillColor(win.Colors.White)
-        ctx.fillCircle(self.x, self.y, self.r)
-    }
-}
 
 enum Sides {
     Left = 50,
@@ -55,38 +31,6 @@ struct Player {
     points: uint
 }
 
-impl Player {
-    fun constructor(side: Sides){
-        self.y = 0f
-        self.w = 20f
-        self.h = 100f
-        self.speed = 1f
-        self.points = 0
-        self.side = side
-    }
-    fun move(&self, direction: float) {
-        self.y += self.speed * direction
-        if self.y < 0 {
-            self.y = 0
-        }
-        else if self.y > S_HEIGHT - self.h {
-            self.y = S_HEIGHT - self.h
-        }
-    }
-    fun collision(&self, ball: &Ball) {
-        if self.side as int < ball.x + ball.r / 2 && self.side as int + self.w > ball.x - ball.r / 2 &&
-            self.y < ball.y + ball.r / 2 && self.y + self.h > ball.y - ball.r / 2 
-        {
-            // collision detected
-            // too lazy to do something rn
-            ball.xs *= -1f
-        }
-    }
-    fun draw(&self, ctx: &win.Window) {
-        ctx.fillColor(win.Colors.White)
-        ctx.fillRect(self.Sides as float, self.y, self.w, self.h)
-    }
-}
 
 fun draw(p1: &Player, p2: &Player, ball: &Ball, ctx: &win.Window){
     ball.draw()

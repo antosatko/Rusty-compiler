@@ -74,6 +74,7 @@ pub mod intermediate {
                         generics: get_generics_decl(&node),
                         overloads: vec![],
                         methods: vec![],
+                        public: public(&node),
                     })
                 } else {
                     errors.push(ErrType::ConflictingNames(name.to_string()))
@@ -88,6 +89,7 @@ pub mod intermediate {
                     generics: get_generics_decl(node),
                     traits: Vec::new(),
                     overloads: Vec::new(),
+                    public: public(&node),
                 };
                 for key in step_inside_arr(node, "keys") {
                     let ident = get_ident(&key);
@@ -155,6 +157,7 @@ pub mod intermediate {
                     kind,
                     identifier,
                     location: 0,
+                    public: public(&node),
                 })
             }
             _ => {}
@@ -236,6 +239,7 @@ pub mod intermediate {
             return_type: kind,
             generics,
             src_loc: 0,
+            public: public(&node),
         }
     }
     fn get_fun_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Function {
@@ -283,7 +287,14 @@ pub mod intermediate {
             return_type: kind,
             generics,
             src_loc: 0,
+            public: public(&node),
         }
+    }
+    fn public(node: &Node) -> bool {
+        if let Tokens::Text(txt) = &step_inside_val(node, "public").name {
+            return txt == "pub";
+        }
+        false
     }
     fn get_operator(node: &Node) -> Tokens {
         step_inside_val(node, "op").name.clone()
@@ -415,6 +426,7 @@ pub mod intermediate {
         kind: ShallowType,
         identifier: String,
         generics: Vec<GenericDecl>,
+        public: bool,
         pub overloads: Vec<Overload>,
         pub methods: Vec<Function>,
     }
@@ -444,6 +456,7 @@ pub mod intermediate {
         pub generics: Vec<GenericDecl>,
         /// location in source code
         pub src_loc: usize,
+        pub public: bool,
     }
     #[derive(Debug)]
     pub struct Overload {
@@ -466,6 +479,7 @@ pub mod intermediate {
         pub generics: Vec<GenericDecl>,
         /// location in source code
         pub src_loc: usize,
+        pub public: bool,
     }
     #[derive(Debug)]
     pub struct Enum {
@@ -488,6 +502,7 @@ pub mod intermediate {
         pub methods: Vec<Function>,
         pub overloads: Vec<Overload>,
         pub traits: Vec<String>,
+        pub public: bool,
     }
     #[derive(Debug)]
     pub struct Variable {
@@ -502,6 +517,7 @@ pub mod intermediate {
         pub identifier: String,
         /// location on stack
         pub location: usize,
+        pub public: bool,
     }
     /// identifiers can not contain these characters: + - * / = % ; : , . ({<[]>}) & | ! ? " '
     /// map: let i: Int = 32; i = i + 63;

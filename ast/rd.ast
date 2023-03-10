@@ -34,7 +34,8 @@ KWLet identifier type expression
 "
 const DANDA: int = 50;
 "
-KWConst identifier type expression
+KWConst identifier type expression public
+	"pub" ? set="public"
 	"const" harderr="true"
 	ident set="identifier"
 	type_specifier set="type"
@@ -62,7 +63,7 @@ etc..
 type main generic ref
 	ref_type ? set="ref"
 	array_decl ? set="main" end="false"
-	type_ident set="main"
+	type_ident_null set="main"
 	generic_expr ? set="generic";
 
 ref_type [refs
@@ -72,6 +73,12 @@ ref_type [refs
 type_ident [nodes
 	ident set="nodes"
 	. ? back="1";
+
+
+type_ident_null [nodes nullable
+	ident set="nodes"
+	. ? back="1"
+	? ? set="nullable";
 
 "
 [int; 60]
@@ -87,7 +94,8 @@ array_decl type size
 "
 type danda = int;
 "
-KWType identifier type generic
+KWType identifier type generic public
+	"pub" ? set="public"
 	"type" harderr="true"
 	ident set="identifier"
 	generic_decl ? set="generic"
@@ -210,13 +218,51 @@ switch_node expression code
 
 
 "
+try {
+	dangerous_function();
+}
+"
+KWTry code_block [catch
+	"try" harderr="true"
+	code_block set="code_block"
+	KWCatch ? set="catch" back="0";
+
+
+"
+try{}
+catch e: NotNumber {}
+catch e: WrongEncoding, Ooops {}
+catch e {}
+"
+KWCatch identifier [types code_block
+	"catch" harderr="true"
+	ident ? set="identifier"
+		: ?
+			type_ident ? set="types"
+			, ? back="1"
+	code_block set="code_block";
+
+
+"
+if str.NaN() {
+	yeet NotNumeric
+}
+"
+KWYeet err
+	"yeet" harderr="true"
+	variable set="err"
+	;?;
+
+
+"
 enum {
 	One,
 	Two,
 	Five = 5
 }
 "
-KWEnum identifier [values
+KWEnum identifier [values public
+	"pub" ? set="public"
 	"enum" harderr="true"
 	ident set="identifier"
 	{
@@ -244,7 +290,8 @@ struct Danda <T> {
 	things: [T, 50],
 }
 "
-KWStruct identifier [keys generic
+KWStruct identifier [keys generic public
+	"pub" ? set="public"
 	"struct" harderr="true"
 	ident set="identifier"
 	generic_decl ? set="generic"
@@ -259,9 +306,9 @@ impl Danda(Rusty) {
 	fun move(self){}
 }
 "
-KWImpl identifier [traits [methods
+KWImpl target [traits [methods
 	"impl" harderr="true"
-	ident set="identifier"
+	impl_target set="target"
 	; ? err="impl body not implemented"
 	( ?
 		ident set="traits"
@@ -274,6 +321,11 @@ KWImpl identifier [traits [methods
 	};
 
 
+impl_target identifier
+	"trait" ? set="identifier" end="true"
+	type_ident ? set="identifier" end="false"
+	"'any" err="";
+
 "
 trait Rusty (Danda){
 	fun print (self){
@@ -281,12 +333,16 @@ trait Rusty (Danda){
 	}
 }
 "
-KWTrait identifier parent [methods
+KWTrait identifier parent [traits [methods public
+	"pub" ? set="public"
 	"trait" harderr="true"
 	ident set="identifier"
-	(
-	ident set="parent"
-	)
+	( ?
+		type_ident set="traits"
+		, ? back="1"
+		)
+	: ?
+		type_ident set="parent"
 	{
 	KWOverload ? set="methods" back="0"
 	KWFun ? set="methods" back="1"
@@ -299,7 +355,8 @@ fun danda() {}
 fun danda(&self) {}
 fun danda(self) {}
 "
-KWFun identifier generic [arguments type code
+KWFun identifier generic [arguments type code errorable public
+	"pub" ? set="public"
 	"fun" harderr="true"
 	ident set="identifier"
 	generic_decl ? set="generic"
@@ -308,6 +365,7 @@ KWFun identifier generic [arguments type code
 	arg ? set="arguments"
 	, ? back="1"
 	)
+	! ? set="errorable"
 	type_specifier ? set="type"
 	code_block set="code" returnable="true";
 
@@ -319,13 +377,15 @@ impl Vec2 {
 	}
 }
 "
-KWOverload op arg type code generic
+KWOverload op arg type code generic errorable public
+	"pub" ? set="public"
 	"overload" harderr="true"
 	overloadable_op set="op"
 	generic_decl ? set="generic"
 	(
 	arg set="arg"
 	)
+	! ? set="errorable"
 	type_specifier ? set="type"
 	code_block set="code";
 
@@ -343,7 +403,7 @@ let danda = struct Danda {
 struct_builder [fields mod type
 	"struct"
 	value_mod ? set="mod"
-	ident set="type"
+	type_ident set="type"
 	{
 	struct_field ? set="fields"
 	, ? back="1"
@@ -367,7 +427,7 @@ generic_ident identifier [traits
 		);
 
 KWReturn expression
-	"yeet" harderr="true"
+	"return" harderr="true"
 	expression_option ? set="expression" 
 	;?;
 	
@@ -395,11 +455,13 @@ code_block [nodes
 	KWImpl ? set="nodes" back="14"
 	KWTrait ? set="nodes" back="15"
 	KWEnum ? set="nodes" back="16"
-	code_block ? set="nodes" back="17"
-	set ? set="nodes" back="18"
-	; ? back="19"
+	KWTry ? set="nodes" back="17"
+	KWYeet ? set="nodes" back="18"
+	code_block ? set="nodes" back="19"
+	set ? set="nodes" back="20"
+	; ? back="21"
 	} ? end="true"
-	expression ? set="nodes" back="21";
+	expression ? set="nodes" back="23";
 
 set value operator expression
 	value set="value"

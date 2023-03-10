@@ -56,11 +56,6 @@ fn main() {
                 panic!("hruzostrasna pohroma");
             }; //tokenize(&string, true);
             let parsed_tree = generate_tree(&tokens.0, &ast, &tokens.1);
-            println!("Parsed.");
-            println!(
-                "time: {}",
-                SystemTime::now().duration_since(time).unwrap().as_millis()
-            );
             use intermediate::intermediate;
             match &parsed_tree {
                 Some(tree) => {
@@ -72,9 +67,15 @@ fn main() {
                     );
                 }
                 None => {
-                    panic!("tbh I have no idea what happend, you should never be able to see this. Maybe you are special :) (problem occured while parsing)")
+                    println!("Aborting.");
+                    return
                 }
             }
+            println!("Parsed.");
+            println!(
+                "time: {}",
+                SystemTime::now().duration_since(time).unwrap().as_millis()
+            );
             if false {
                 if let Some(nodes) = &parsed_tree {
                     use tree_walker::tree_walker::ArgNodeType;
