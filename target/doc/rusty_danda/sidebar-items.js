@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":[["main",""]],"mod":[["ast_analyzer",""],["ast_parser",""],["intermediate",""],["lexer",""],["lexing_preprocessor",""],["reader",""],["runtime",""],["test",""],["tree_walker",""],["writer",""]]};
