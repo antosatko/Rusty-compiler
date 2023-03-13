@@ -24,21 +24,21 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [x] preprocessing
 - [x] parsing ast rules
 - [x] generating ast
-- [] ast analisys
-- [] type check
-- [] binary generation
+- [ ] ast analisys
+- [ ] type check
+- [ ] binary generation
 
 ### Other plans
-- [] optimization on ast
-- [] optimization on binary
-- [] create installer for end user
-- [] standard library
-- [] game dev library
-- [] (almost) fully featured compiler + vm on browser
-- [] draw mascot
+- [ ] optimization on ast
+- [ ] optimization on binary
+- [ ] create installer for end user
+- [ ] standard library
+- [ ] game dev library
+- [ ] (almost) fully featured compiler + vm on browser
+- [ ] draw mascot
 
 ### End Goal
-- [] write a graphical game to demonstrate my languge
+- [ ] write a graphical game to demonstrate my languge
 - [x] learn Rust
 - [x] have fun
 
