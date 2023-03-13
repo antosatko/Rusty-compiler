@@ -17,9 +17,30 @@ All you need to do to get started is have cargo installed on your machine and cl
 
 ## Project Goals <a name = "goals"></a>
 
-Compiler is not done yet, but it already has some interesting features and many to come
+Main goal is to learn Rust, earn bragging rights and have some language to write my side projects in.
 
 ### Important
 - [x] tokenization
-- [x] tokenization
-- [x] tokenization
+- [x] preprocessing
+- [x] parsing ast rules
+- [x] generating ast
+- [] ast analisys
+- [] type check
+- [] binary generation
+
+### Other plans
+- [] optimization on ast
+- [] optimization on binary
+- [] create installer for end user
+- [] standard library
+- [] game dev library
+- [] (almost) fully featured compiler + vm on browser
+- [] draw mascot
+
+### End Goal
+- [] write a graphical game to demonstrate my languge
+- [x] learn Rust
+- [x] have fun
+
+## Syntax
+This is not really place to talk about syntax, but if you are interested, you can look at ast/rd.ast, where you can find source code for ast and also have a look at demos (only test.rd is guaranteed to be up to date).
