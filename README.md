@@ -5,7 +5,7 @@
 - [About](#about)
 - [Getting Started](#getting_started)
 - [Project Goals](#goals)
-- [Contributing](../CONTRIBUTING.md)
+- [Syntax](#syntax)
 
 ## About <a name = "about"></a>
 
@@ -42,5 +42,5 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [x] learn Rust
 - [x] have fun
 
-## Syntax
+## Syntax <a name = "syntax"></a>
 This is not really place to talk about syntax, but if you are interested, you can look at ast/rd.ast, where you can find source code for ast and also have a look at demos (only test.rd is guaranteed to be up to date).
