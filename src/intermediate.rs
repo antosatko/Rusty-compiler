@@ -82,10 +82,8 @@ pub mod intermediate {
                     identifier: get_ident(node),
                     fields: Vec::new(),
                     src_loc: 0,
-                    methods: Vec::new(),
                     generics: get_generics_decl(node),
                     traits: Vec::new(),
-                    overloads: Vec::new(),
                     public: public(&node),
                 };
                 for key in step_inside_arr(node, "keys") {
@@ -157,20 +155,11 @@ pub mod intermediate {
                     public: public(&node),
                 })
             }
-            _ => {}
-        }
-    }
-    /*fn load_node_second(node: &Node, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
-        let name = if let Tokens::Text(name) = &node.name {
-            name
-        } else {
-            panic!()
-        };
-        match name.as_str() {
             "KWImpl" => {
-                let ident = get_ident(&node);
+                let ident = get_nested_ident(&step_inside_val(&node, "identifier"), errors);
                 let mut methods = Vec::new();
                 let mut overloads = Vec::new();
+                let traits = get_traits(&node, errors);
                 for method in step_inside_arr(&node, "methods") {
                     if let Tokens::Text(txt) = &method.name {
                         match txt.as_str() {
@@ -184,41 +173,35 @@ pub mod intermediate {
                         }
                     }
                 }
-                match dictionary.type_of(&ident) {
-                    Some(IdentifierKinds::Enum) => {
-                        for e in dictionary.enums.iter_mut() {
-                            if e.identifier == ident {
-                                e.methods = methods;
-                                e.overloads = overloads;
-                                return;
-                            }
-                        }
-                    }
-                    Some(IdentifierKinds::Struct) => {
-                        for s in dictionary.structs.iter_mut() {
-                            if s.identifier == ident {
-                                s.methods = methods;
-                                s.overloads = overloads;
-                                return;
-                            }
-                        }
-                    }
-                    Some(IdentifierKinds::Type) => {
-                        for t in dictionary.types.iter_mut() {
-                            if t.identifier == ident {
-                                t.methods = methods;
-                                t.overloads = overloads;
-                                return;
-                            }
-                        }
-                    }
-                    Some(a) => errors.push(ErrType::BadImpl(ident.to_string(), a.clone())),
-                    None => errors.push(ErrType::NonExistentIdentifier(ident.to_string())),
-                }
+                dictionary.implementations.push(Implementation {
+                    target: ident,
+                    traits,
+                    functions: methods,
+                    overloads,
+                    src_loc: 0,
+                })
             }
             _ => {}
         }
-    }*/
+    }
+    fn get_traits(node: &Node, errors: &mut Vec<ErrType>) -> Vec<NestedIdent> {
+        let mut result = vec![];
+        for tr in step_inside_arr(&node, "traits") {
+            result.push(get_nested_ident(tr, errors));
+        }
+        result
+    }
+    fn get_nested_ident(node: &Node, errors: &mut Vec<ErrType>) -> NestedIdent {
+        let mut result = vec![];
+        for nd in step_inside_arr(node, "nodes") {
+            if let Tokens::Text(txt) = &step_inside_val(nd, "identifier").name {
+                result.push(txt.to_string());
+            }else {
+                panic!()
+            }
+        }
+        result
+    }
     fn get_overload_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Overload {
         let operator = get_operator(step_inside_val(&node, "op"));
         let generics = get_generics_decl(&node);
@@ -401,6 +384,7 @@ pub mod intermediate {
         pub constants: Vec<Constant>,
         pub identifiers: Vec<(String, IdentifierKinds)>,
         pub imports: Vec<Dictionary>,
+        pub implementations: Vec<Implementation>,
     }
     #[derive(Debug)]
     struct Trait {
@@ -430,7 +414,7 @@ pub mod intermediate {
     #[derive(Debug)]
     pub struct GenericDecl {
         identifier: String,
-        traits: Vec<String>,
+        traits: NestedIdent,
     }
     #[derive(Debug)]
     pub struct Function {
@@ -489,6 +473,7 @@ pub mod intermediate {
         pub methods: Vec<Function>,
         pub overloads: Vec<Overload>,
     }
+    pub type NestedIdent = Vec<String>;
     #[derive(Debug)]
     pub struct Struct {
         pub generics: Vec<GenericDecl>,
@@ -496,10 +481,17 @@ pub mod intermediate {
         pub fields: Vec<(String, ShallowType)>,
         /// location in source code
         pub src_loc: usize,
-        pub methods: Vec<Function>,
-        pub overloads: Vec<Overload>,
-        pub traits: Vec<String>,
+        pub traits: Vec<NestedIdent>,
         pub public: bool,
+    }
+    #[derive(Debug)]
+    pub struct Implementation {
+        pub target: NestedIdent,
+        pub traits: Vec<NestedIdent>,
+        pub functions: Vec<Function>,
+        pub overloads: Vec<Overload>,
+        /// location in source code
+        pub src_loc: usize,
     }
     #[derive(Debug)]
     pub struct Variable {
@@ -543,7 +535,7 @@ pub mod intermediate {
     #[derive(Debug)]
     pub struct ShallowType {
         refs: usize,
-        main: Vec<String>,
+        main: NestedIdent,
         generics: GenericExpr,
     }
 
@@ -558,6 +550,7 @@ pub mod intermediate {
                 constants: vec![],
                 identifiers: vec![],
                 imports: vec![],
+                implementations: vec![],
             }
         }
         fn index_of(&self, identifier: String) -> Option<usize> {

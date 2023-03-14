@@ -306,25 +306,17 @@ impl Danda(Rusty) {
 	fun move(self){}
 }
 "
-KWImpl target [traits [methods
+KWImpl identifier [traits [methods
 	"impl" harderr="true"
-	impl_target set="target"
-	; ? err="impl body not implemented"
-	( ?
-		ident set="traits"
+	type_ident set="identifier"
+	"from" ?
+		type_ident set="traits"
 		, ? back="1"
-		)
-	; ? end="true"
 	{
 	KWOverload ? set="methods" back="0"
 	KWFun ? set="methods" back="1"
 	};
 
-
-impl_target identifier
-	"trait" ? set="identifier" end="true"
-	type_ident ? set="identifier" end="false"
-	"'any" err="";
 
 "
 trait Rusty (Danda){
@@ -333,16 +325,13 @@ trait Rusty (Danda){
 	}
 }
 "
-KWTrait identifier parent [traits [methods public
+KWTrait identifier [traits [methods public
 	"pub" ? set="public"
 	"trait" harderr="true"
 	ident set="identifier"
-	( ?
+	"impl" ?
 		type_ident set="traits"
 		, ? back="1"
-		)
-	: ?
-		type_ident set="parent"
 	{
 	KWOverload ? set="methods" back="0"
 	KWFun ? set="methods" back="1"
@@ -367,7 +356,7 @@ KWFun identifier generic [arguments type code errorable public
 	)
 	! ? set="errorable"
 	type_specifier ? set="type"
-	code_block set="code" returnable="true";
+	code_block ? set="code" returnable="true";
 
 
 "

@@ -17,7 +17,7 @@ struct Ball<Generic(tr)> {
     ys: float,
 }
 
-impl Ball {
+impl Ball.BLB from sdg.fdg , sdfs.htfzhjtz.jhgizudyg.g{
     fun constructor(direction: float){
         self.x = S_WIDTH as float / 2f
         self.y = S_HEIGHT as float / 2f
