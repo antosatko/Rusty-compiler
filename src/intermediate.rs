@@ -1,7 +1,7 @@
 pub mod intermediate {
     use crate::{
         lexer::tokenizer::Tokens,
-        tree_walker::tree_walker::{self, ArgNodeType, Node},
+        tree_walker::tree_walker::{self, ArgNodeType, Node, Err},
     };
     use core::panic;
     use std::{collections::HashMap, fs::DirEntry};
@@ -68,7 +68,7 @@ pub mod intermediate {
                     dictionary.types.push(TypeDef {
                         kind: get_type(step_inside_val(&node, "type")),
                         identifier: name,
-                        generics: get_generics_decl(&node),
+                        generics: get_generics_decl(&node, errors),
                         overloads: vec![],
                         methods: vec![],
                         public: public(&node),
@@ -82,7 +82,7 @@ pub mod intermediate {
                     identifier: get_ident(node),
                     fields: Vec::new(),
                     src_loc: 0,
-                    generics: get_generics_decl(node),
+                    generics: get_generics_decl(node, errors),
                     traits: Vec::new(),
                     public: public(&node),
                 };
@@ -204,7 +204,7 @@ pub mod intermediate {
     }
     fn get_overload_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Overload {
         let operator = get_operator(step_inside_val(&node, "op"));
-        let generics = get_generics_decl(&node);
+        let generics = get_generics_decl(&node, errors);
         let kind = if let Some(kind) = try_step_inside_val(step_inside_val(&node, "type"), "type") {
             Some(get_type(kind))
         } else {
@@ -224,7 +224,7 @@ pub mod intermediate {
     }
     fn get_fun_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Function {
         let identifier = get_ident(&node);
-        let generics = get_generics_decl(&node);
+        let generics = get_generics_decl(&node, errors);
         let kind = if let Some(kind) = try_step_inside_val(step_inside_val(&node, "type"), "type") {
             Some(get_type(kind))
         } else {
@@ -334,15 +334,13 @@ pub mod intermediate {
         }
         result
     }
-    fn get_generics_decl<'a>(node: &'a Node) -> Vec<GenericDecl> {
+    fn get_generics_decl<'a>(node: &'a Node, errors: &mut Vec<ErrType>) -> Vec<GenericDecl> {
         let mut generics = Vec::new();
         if let Some(arr) = try_step_inside_arr(step_inside_val(&node, "generic"), "identifiers") {
             for generic in arr {
                 let mut traits = Vec::new();
                 for ident in step_inside_arr(generic, "traits") {
-                    if let Tokens::Text(txt) = &step_inside_val(ident, "identifier").name {
-                        traits.push(txt.to_string());
-                    }
+                    traits.push(get_nested_ident(&ident, errors));
                 }
                 generics.push(GenericDecl {
                     identifier: get_ident(generic),
@@ -385,13 +383,17 @@ pub mod intermediate {
         pub identifiers: Vec<(String, IdentifierKinds)>,
         pub imports: Vec<Dictionary>,
         pub implementations: Vec<Implementation>,
+        pub traits: Vec<Trait>,
     }
     #[derive(Debug)]
-    struct Trait {
-        identifier: String,
-        methods: Vec<Function>,
-        src_loc: usize,
-        fields: Vec<(String, ShallowType)>,
+    pub struct Trait {
+        pub identifier: String,
+        pub methods: Vec<Function>,
+        pub overloads: Vec<Overload>,
+        // dependences
+        pub traits: Vec<NestedIdent>,
+        pub src_loc: usize,
+        pub public: bool,
     }
     #[derive(Debug, Clone)]
     pub enum IdentifierKinds {
@@ -404,17 +406,17 @@ pub mod intermediate {
     }
     #[derive(Debug)]
     pub struct TypeDef {
-        kind: ShallowType,
-        identifier: String,
-        generics: Vec<GenericDecl>,
-        public: bool,
+        pub kind: ShallowType,
+        pub identifier: String,
+        pub generics: Vec<GenericDecl>,
+        pub public: bool,
         pub overloads: Vec<Overload>,
         pub methods: Vec<Function>,
     }
     #[derive(Debug)]
     pub struct GenericDecl {
-        identifier: String,
-        traits: NestedIdent,
+        pub identifier: String,
+        pub traits: Vec<NestedIdent>,
     }
     #[derive(Debug)]
     pub struct Function {
@@ -551,6 +553,7 @@ pub mod intermediate {
                 identifiers: vec![],
                 imports: vec![],
                 implementations: vec![],
+                traits: vec![],
             }
         }
         fn index_of(&self, identifier: String) -> Option<usize> {

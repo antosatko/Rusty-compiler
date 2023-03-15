@@ -411,7 +411,7 @@ generic_decl [identifiers
 generic_ident identifier [traits
 	ident harderr="true" set="identifier"
 	( ?
-		ident ? set="traits"
+		type_ident ? set="traits"
 		, ? back="1"
 		);
 

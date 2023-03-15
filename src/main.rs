@@ -56,6 +56,11 @@ fn main() {
                 panic!("hruzostrasna pohroma");
             }; //tokenize(&string, true);
             let parsed_tree = generate_tree(&tokens.0, &ast, &tokens.1);
+            println!("AST generated.");
+            println!(
+                "time: {}",
+                SystemTime::now().duration_since(time).unwrap().as_millis()
+            );
             use intermediate::intermediate;
             match &parsed_tree {
                 Some(tree) => {
@@ -65,6 +70,7 @@ fn main() {
                         "time: {}",
                         SystemTime::now().duration_since(time).unwrap().as_millis()
                     );
+                    black_box(tree);
                 }
                 None => {
                     println!("Aborting.");
