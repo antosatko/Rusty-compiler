@@ -14,7 +14,7 @@ Compiler for Rusty Danda programming language. This repository contains everythi
 
 ## Getting Started <a name = "getting_started"></a>
 
-All you need to do to get started is have cargo installed on your machine and clone this repository.
+All you need to have is cargo installed and run this as any other rust project.
 
 ## Project Goals <a name = "goals"></a>
 
