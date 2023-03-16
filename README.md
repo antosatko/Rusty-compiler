@@ -1,4 +1,5 @@
 # Rusty Danda compiler
+![Bublina](logo.png)
 
 ## Table of Contents
 
