@@ -1,5 +1,5 @@
 # Rusty Danda compiler
-<a><img src="logo.png" align="middle" height="48" width="48" ></a>
+<a><img src="logo.png" align="middle" height="256" width="256" ></a>
 
 ## Table of Contents
 
