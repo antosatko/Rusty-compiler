@@ -1,5 +1,5 @@
 # Rusty Danda compiler
-![Bublina](logo.png)
+<a><img src="logo.png" align="middle" height="48" width="48" ></a>
 
 ## Table of Contents
 
