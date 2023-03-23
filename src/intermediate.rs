@@ -1,7 +1,7 @@
 pub mod intermediate {
     use crate::{
         lexer::tokenizer::Tokens,
-        tree_walker::tree_walker::{self, ArgNodeType, Node, Err},
+        tree_walker::tree_walker::{self, ArgNodeType, Err, Node},
     };
     use core::panic;
     use std::{collections::HashMap, fs::DirEntry};
@@ -131,33 +131,56 @@ pub mod intermediate {
                 }
             }
             "KWFun" => {
-                dictionary.functions.push(get_fun_siginifier(&node, errors));
+                let fun = get_fun_siginifier(&node, errors);
+                if dictionary.register_id(fun.identifier.to_string(), IdentifierKinds::Function) {
+                    dictionary.functions.push(fun);
+                } else {
+                    errors.push(ErrType::ConflictingNames(fun.identifier.to_string()))
+                }
             }
             "KWLet" => {
                 let identifier = get_ident(&node);
-                let kind_src = step_inside_val(&node, "type_specifier");
-                if let Tokens::Text(txt) = &kind_src.name {
-                    let kind = get_type(step_inside_val(kind_src, "type"));
+                let undefKind = true;
+                let kind = if let Tokens::Text(txt) = &step_inside_val(node, "type").name {
+                    if txt == "type_specifier" {
+                        Some(get_type(step_inside_val(
+                            step_inside_val(node, "type"),
+                            "type",
+                        )))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                if dictionary.register_id(identifier.to_string(), IdentifierKinds::Variable) {
                     dictionary.variables.push(Variable {
-                        kind: Some(kind),
+                        kind,
                         identifier,
                         location: 0,
                     })
+                } else {
+                    errors.push(ErrType::ConflictingNames(identifier.to_string()))
                 }
             }
             "KWConst" => {
                 let identifier = get_ident(&node);
                 let kind = get_type(step_inside_val(&step_inside_val(&node, "type"), "type"));
-                dictionary.constants.push(Constant {
-                    kind,
-                    identifier,
-                    location: 0,
-                    public: public(&node),
-                })
+                if dictionary.register_id(identifier.to_string(), IdentifierKinds::Variable) {
+                    // TODO: maybe change this idk
+                    dictionary.constants.push(Constant {
+                        kind,
+                        identifier,
+                        location: 0,
+                        public: public(&node),
+                    })
+                } else {
+                    errors.push(ErrType::ConflictingNames(identifier.to_string()))
+                }
             }
             "KWImpl" => {
                 let ident = get_nested_ident(&step_inside_val(&node, "identifier"), errors);
-                let mut methods = Vec::new();
+                let mut functions = Vec::new();
                 let mut overloads = Vec::new();
                 let traits = get_traits(&node, errors);
                 for method in step_inside_arr(&node, "methods") {
@@ -167,7 +190,7 @@ pub mod intermediate {
                                 overloads.push(get_overload_siginifier(&method, errors))
                             }
                             "KWFun" => {
-                                methods.push(get_fun_siginifier(&method, errors));
+                                functions.push(get_fun_siginifier(&method, errors));
                             }
                             _ => {}
                         }
@@ -176,10 +199,42 @@ pub mod intermediate {
                 dictionary.implementations.push(Implementation {
                     target: ident,
                     traits,
-                    functions: methods,
+                    functions,
                     overloads,
                     src_loc: 0,
                 })
+            }
+            "KWTrait" => {
+                let is_pub = public(&node);
+                let identifier = get_ident(&node);
+                let mut functions = Vec::new();
+                let mut overloads = Vec::new();
+                let traits = get_traits(&node, errors);
+                for method in step_inside_arr(&node, "methods") {
+                    if let Tokens::Text(txt) = &method.name {
+                        match txt.as_str() {
+                            "KWOverload" => {
+                                overloads.push(get_overload_siginifier(&method, errors))
+                            }
+                            "KWFun" => {
+                                functions.push(get_fun_siginifier(&method, errors));
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                if dictionary.register_id(identifier.to_string(), IdentifierKinds::Struct) {
+                    dictionary.traits.push(Trait {
+                        identifier,
+                        methods: functions,
+                        overloads,
+                        traits,
+                        src_loc: 0,
+                        public: is_pub,
+                    })
+                } else {
+                    errors.push(ErrType::ConflictingNames(identifier.to_string()))
+                }
             }
             _ => {}
         }
@@ -196,7 +251,7 @@ pub mod intermediate {
         for nd in step_inside_arr(node, "nodes") {
             if let Tokens::Text(txt) = &step_inside_val(nd, "identifier").name {
                 result.push(txt.to_string());
-            }else {
+            } else {
                 panic!()
             }
         }
@@ -539,6 +594,15 @@ pub mod intermediate {
         refs: usize,
         main: NestedIdent,
         generics: GenericExpr,
+    }
+    impl ShallowType {
+        pub fn empty() -> Self {
+            ShallowType {
+                refs: 0,
+                main: vec![],
+                generics: vec![],
+            }
+        }
     }
 
     impl Dictionary {

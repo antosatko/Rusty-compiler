@@ -309,7 +309,7 @@ impl Danda(Rusty) {
 KWImpl identifier [traits [methods
 	"impl" harderr="true"
 	type_ident set="identifier"
-	"from" ?
+	"trait" ?
 		type_ident set="traits"
 		, ? back="1"
 	{
