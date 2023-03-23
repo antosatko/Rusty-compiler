@@ -314,6 +314,13 @@ pub mod intermediate {
                 }
             }
         }
+        /*
+
+        to read the dictionary, you need to do this:
+
+        let mut dict = Dictionary::new();
+        load_dictionary(step_inside_arr(step_inside_val(node, "code"), "nodes"), &mut dict, &mut vec![]);
+         */
         Function {
             identifier,
             args,
