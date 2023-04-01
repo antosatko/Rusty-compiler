@@ -33,13 +33,13 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [ ] optimization on ast
 - [ ] optimization on binary
 - [ ] create installer for end user
-- [ ] standard library
+- [x] standard library
 - [ ] game dev library
 - [ ] (almost) fully featured compiler + vm on browser
 - [x] draw mascot (credits: https://github.com/antosmichael07)
 
 ### End Goal
-- [ ] write a graphical game to demonstrate my languge
+- [ ] write a 2d game to demonstrate my languge
 - [x] learn Rust
 - [x] have fun
 
