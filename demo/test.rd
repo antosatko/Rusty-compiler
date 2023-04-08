@@ -10,7 +10,7 @@ type danda<T(auto), A> = mem.HashMap<Danda.nevim<ahoj>, Danda2>
 pub trait TRT impl danda.dfg5 .fg, sger.fdg {
 
     fun constructor(direction: float){
-        self.x = S_WIDTH as float / 2f
+        self.x = -S_WIDTH as float / 2f
         self.y = S_HEIGHT as float / 2f
         self.r = 5f
         self.xs = direction

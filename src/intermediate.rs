@@ -1,4 +1,4 @@
-pub mod intermediate {
+pub mod dictionary {
     use crate::{
         lexer::tokenizer::Tokens,
         tree_walker::tree_walker::{self, ArgNodeType, Err, Node},
@@ -16,6 +16,8 @@ pub mod intermediate {
         }
         println!("global: {global_dict:?}");
         println!("errors: {errors:?}");
+        use crate::type_check::TypesCheck;
+        TypesCheck::index_types(&mut global_dict);
     }
     fn load_dictionary(nodes: &Vec<Node>, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
         for node in nodes {
@@ -223,7 +225,7 @@ pub mod intermediate {
                         }
                     }
                 }
-                if dictionary.register_id(identifier.to_string(), IdentifierKinds::Struct) {
+                if dictionary.register_id(identifier.to_string(), IdentifierKinds::Trait) {
                     dictionary.traits.push(Trait {
                         identifier,
                         methods: functions,
@@ -236,6 +238,7 @@ pub mod intermediate {
                     errors.push(ErrType::ConflictingNames(identifier.to_string()))
                 }
             }
+            "expression" => {}
             _ => {}
         }
     }
@@ -293,6 +296,7 @@ pub mod intermediate {
                         args.push((
                             String::from("self"),
                             ShallowType {
+                                arr_len: None,
                                 refs: count_refs(&arg),
                                 main: vec![String::from("Self")],
                                 generics: Vec::new(),
@@ -373,15 +377,39 @@ pub mod intermediate {
         refs
     }
     fn get_type(node: &Node) -> ShallowType {
+        let mut arr_len = None;
         let mut refs = count_refs(node);
-        let type_ident = step_inside_arr(step_inside_val(&node, "main"), "nodes");
-        let mut main = Vec::new();
-        for path_part in type_ident {
-            if let Tokens::Text(txt) = get_token(path_part, "identifier") {
-                main.push(txt.to_string())
+        let main = if let Some(type_ident) =
+            try_step_inside_arr(step_inside_val(&node, "main"), "nodes")
+        {
+            let mut main = Vec::new();
+            for path_part in type_ident {
+                if let Tokens::Text(txt) = get_token(path_part, "identifier") {
+                    main.push(txt.to_string())
+                }
             }
-        }
+            main
+        } else {
+            let mut main = vec![];
+            let arr = step_inside_val(&node, "arr");
+            if let Some(arr) = try_step_inside_arr(
+                step_inside_val(step_inside_val(&arr, "type"), "main"),
+                "nodes",
+            ) {
+                for path_part in arr {
+                    if let Tokens::Text(txt) = get_token(path_part, "identifier") {
+                        main.push(txt.to_string())
+                    }
+                }
+                println!("arr: {:?}", arr);
+            }
+            // length will be calculated later since it might be a constant or an expression with constant value
+            // consts will be evaluated after the dictionary is loaded
+            arr_len = Some(0);
+            main
+        };
         ShallowType {
+            arr_len,
             refs,
             main,
             generics: get_generics_expr(node),
@@ -465,6 +493,7 @@ pub mod intermediate {
         Struct,
         Variable,
         Namespace,
+        Trait,
     }
     #[derive(Debug)]
     pub struct TypeDef {
@@ -505,14 +534,6 @@ pub mod intermediate {
     }
     #[derive(Debug)]
     pub struct Overload {
-        /// function identifiers will be changed to allow for function overload
-        /// name mangler rules: "{identifier}:{args.foreach("{typeof}:")}"
-        /// example:
-        /// fun myFun(n: int, type: char): int
-        /// fun nothing()
-        /// translates to:
-        /// "myFun:int:char"
-        /// "nothing:"
         pub operator: Tokens,
         /// type of args in order
         pub arg: (String, ShallowType),
@@ -598,6 +619,8 @@ pub mod intermediate {
 
     #[derive(Debug)]
     pub struct ShallowType {
+        /// if Some then it is an array of that length
+        arr_len: Option<usize>,
         refs: usize,
         main: NestedIdent,
         generics: GenericExpr,
@@ -605,6 +628,7 @@ pub mod intermediate {
     impl ShallowType {
         pub fn empty() -> Self {
             ShallowType {
+                arr_len: None,
                 refs: 0,
                 main: vec![],
                 generics: vec![],
@@ -654,6 +678,9 @@ pub mod intermediate {
             self.identifiers.push((name, kind));
             true
         }
+        fn force_id(&mut self, name: String, kind: IdentifierKinds) {
+            self.identifiers.push((name, kind));
+        }
         fn contains(&self, name: &String) -> bool {
             for id in &self.identifiers {
                 if id.0 == *name {
@@ -665,7 +692,7 @@ pub mod intermediate {
     }
 }
 pub mod AnalyzationError {
-    use super::intermediate::IdentifierKinds;
+    use super::dictionary::IdentifierKinds;
 
     #[derive(Debug)]
     pub enum ErrType {

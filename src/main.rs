@@ -14,6 +14,8 @@ mod lexing_preprocessor;
 mod tree_walker;
 mod writer;
 mod intermediate;
+mod type_check;
+mod expression_parser;
 
 fn main() {
     let mut args = env::args();
@@ -61,10 +63,10 @@ fn main() {
                 "time: {}",
                 SystemTime::now().duration_since(time).unwrap().as_millis()
             );
-            use intermediate::intermediate;
+            use intermediate::dictionary;
             match &parsed_tree {
                 Some(tree) => {
-                    intermediate::from_ast(&tree.nodes);
+                    dictionary::from_ast(&tree.nodes);
                     println!("Dictionary generated.");
                     println!(
                         "time: {}",
@@ -82,7 +84,7 @@ fn main() {
                 "time: {}",
                 SystemTime::now().duration_since(time).unwrap().as_millis()
             );
-            if false {
+            if true {
                 if let Some(nodes) = &parsed_tree {
                     use tree_walker::tree_walker::ArgNodeType;
                     for nod in &nodes.nodes {

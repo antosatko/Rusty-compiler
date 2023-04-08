@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../rusty_vm"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../rusty_standard_lib"
+		}
+	],
+	"settings": {}
+}

@@ -4,6 +4,7 @@ This is main AST
 Full documentation for this file format can be found in ast/readme
 "
 
+
 entry [nodes
 	KWFun ? set="nodes" back="0"
 	KWConst ? set="nodes" back="1"
@@ -60,9 +61,9 @@ int
 int<float<[int; 50]>>
 etc..
 "
-type main generic ref
+type main generic ref arr
 	ref_type ? set="ref"
-	array_decl ? set="main" end="false"
+	array_decl ? set="arr" end="false"
 	type_ident_null set="main"
 	generic_expr ? set="generic";
 
@@ -321,7 +322,10 @@ KWImpl identifier [traits [methods
 "
 trait Rusty (Danda){
 	fun print (self){
-		// i can access self.age, self.name
+		// i can access methods belonging to Danda trait
+		// for example 
+		let name = self.name()
+		print(name)
 	}
 }
 "
@@ -378,25 +382,6 @@ KWOverload op arg type code generic errorable public
 	type_specifier ? set="type"
 	code_block set="code";
 
-
-"
-struct (new) Danda {
-	danda: true
-}
-// example..
-let danda = struct Danda {
-	danda: true
-}
-// new just means that struct will be stored on heap
-"
-struct_builder [fields mod type
-	"struct"
-	value_mod ? set="mod"
-	type_ident set="type"
-	{
-	struct_field ? set="fields"
-	, ? back="1"
-	};
 
 self_arg args ref
 	ref_type ? set="ref"
@@ -479,22 +464,19 @@ expression_option [nodes
 
 
 "
-this and expression word was meant to replace current expressions for better validation but 
+tail is everything that extends basic variable/parenthesis
+example: danda[5].touch_grass(9)
+              ~~~~~~~~~~~~~~~~~~ <- everything here is tail
 "
-expression_updated [nodes
-	expression_word ? set="nodes"
-		operator ? set="nodes" back="1";
-
-expression_word word
-	value ? set="word" end="false"
-	free_parenthesis ? set="word" end="false"
-	"'any" err="";
-
-free_parenthesis parenthesis cast mod unary
-	value_mod ? set="mod"
-	unary_op ? set="unary"
-	parenthesis harderr="true" set="parenthesis"
+variable_tail [nodes cast
+	nested ? set="nodes" back="0"
+	idx ? set="nodes" back="1"
+	function_call ? set="nodes" back="2"
 	cast ? set="cast";
+
+free_parenthesis parenthesis prepend tail
+	parenthesis harderr="true" set="parenthesis"
+	variable_tail set="tail";
 
 operator op
 	< ? set="op" end="true"
@@ -533,6 +515,8 @@ overloadable_op op
 	|| ? set="op" end="true"
 	&& ? set="op" end="true"
 	% ? set="op" end="true"
+	[ ? set="op" end="true"
+	! ? set="op" end="true"
 	"'any" err="";
 
 parenthesis [expression cast
@@ -541,10 +525,16 @@ parenthesis [expression cast
 	, ? back="1"
 	);
 
-value value unary
-	unary_op ? set="unary"
+value_prepend ref keywords unary
+	ref_tok ? set="ref"
+	value_mod ? set="keywords" harderr="true"
+	unary_op ? set="unary";
+
+value value prepend
+	value_prepend ? set="prepend"
 	variable ? set="value" end="false"
 	literal ? set="value" end="false"
+	free_parenthesis ? set="value" end="false"
 	"'any" err="true";
 
 unary_op op
@@ -552,31 +542,17 @@ unary_op op
 	! ? set="op" end="true"
 	"'any" err="";
 
-variable [value cast keywords
-	ref_tok ? set="value"
-	value_mod ? set="keywords" harderr="true"
+variable value tail
 	ident set="value"
-	nested ? set="value" back="0"
-	idx ? set="value" back="1"
-	function_call ? set="value" back="2"
-	cast ? set="cast";
+	variable_tail set="tail";
 
 
-"
-struct_builder ? set='value' end='false'
-
-deleted for now, i dont want to have two different ways to create instances
-"
 literal value
 	"'number" ? set="value" end="true"
 	"'string" ? set="value" end="true"
 	array_expr ? set="value" end="false"
 	"'any" err="not a literal value";
 
-struct_field key value
-	ident set="key"
-	:
-	expression set="value";
 
 array_expr array
 	array_builder ? set="array" end="false"
