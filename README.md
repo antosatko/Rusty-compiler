@@ -34,7 +34,7 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [ ] optimization on binary
 - [ ] create installer for end user
 - [x] standard library
-- [ ] game dev library
+- [ ] game dev library (considering raylib)
 - [ ] (almost) fully featured compiler + vm on browser
 - [x] draw mascot (credits: https://github.com/antosmichael07)
 - [ ] integrate Lua (might be fun)
@@ -45,4 +45,4 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [x] have fun
 
 ## Syntax <a name = "syntax"></a>
-This is not really place to talk about syntax, but if you are interested, you can look at ast/rd.ast, where you can find source code for ast and also have a look at demos (only test.rd is guaranteed to be up to date).
+This is not really place to talk about syntax, but if you are interested, you can look at ``ast/rd.ast``, where you will find source code for ast and also have a look at demos (only test.rd is guaranteed to be up to date).
