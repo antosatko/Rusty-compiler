@@ -37,7 +37,7 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [ ] game dev library
 - [ ] (almost) fully featured compiler + vm on browser
 - [x] draw mascot (credits: https://github.com/antosmichael07)
-- [] integrate Lua (might be fun)
+- [ ] integrate Lua (might be fun)
 
 ### End Goal
 - [ ] write a 2d game to demonstrate my languge
