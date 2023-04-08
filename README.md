@@ -10,7 +10,7 @@
 
 ## About <a name = "about"></a>
 
-Compiler for Rusty Danda programming language. This repository contains everything related to Rusty danda language processing. For bytecode interpreter look at https://github.com/it-2001/rusty-vm
+Compiler for Rusty Danda programming language. This repository contains everything related to Rusty danda language processing. For bytecode interpreter look at https://github.com/it-2001/rusty-vm. Standard library will get proper documentation later.
 
 ## Getting Started <a name = "getting_started"></a>
 
@@ -25,7 +25,7 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [x] preprocessing
 - [x] parsing ast rules
 - [x] generating ast
-- [ ] ast analisys
+- [x] ast analisys - partially
 - [ ] type check
 - [ ] binary generation
 
@@ -37,6 +37,7 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [ ] game dev library
 - [ ] (almost) fully featured compiler + vm on browser
 - [x] draw mascot (credits: https://github.com/antosmichael07)
+- [] integrate Lua (might be fun)
 
 ### End Goal
 - [ ] write a 2d game to demonstrate my languge
