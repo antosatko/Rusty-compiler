@@ -296,14 +296,12 @@ pub mod dictionary {
         } else {
             None
         };
-        println!("good 1");
         let generics = get_generics_decl(&node, errors);
         let kind = if let Some(kind) = try_step_inside_val(step_inside_val(&node, "type"), "type") {
             Some(get_type(kind, errors))
         } else {
             None
         };
-        println!("good 2");
         let mut args = Vec::new();
         for arg in step_inside_arr(node, "arguments") {
             if let Tokens::Text(name) = &arg.name {
@@ -335,10 +333,8 @@ pub mod dictionary {
                 }
             }
         }
-        println!("good 3");
         let can_yeet = step_inside_val(&node, "errorable").name
             == Tokens::Operator(crate::lexer::tokenizer::Operators::Not);
-        println!("good 4");
         let public = if node.nodes.contains_key("public") {
             public(&node)
         } else {
@@ -406,9 +402,7 @@ pub mod dictionary {
     fn get_type(node: &Node, errors: &mut Vec<ErrType>) -> ShallowType {
         let main = step_inside_val(&node, "main");
         if main.name == Tokens::Text(String::from("function_head")) {
-            println!("fun starts");
             let fun = get_fun_siginifier(&main, errors);
-            println!("very good {:?}", fun);
             let refs = count_refs(&node);
             return ShallowType {
                 is_fun: Some(Box::new(fun)),
@@ -442,7 +436,6 @@ pub mod dictionary {
                         main.push(txt.to_string())
                     }
                 }
-                println!("arr: {:?}", arr);
             }
             // length will be calculated later since it might be a constant or an expression with constant value
             // consts will be evaluated after the dictionary is loaded
