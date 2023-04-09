@@ -63,6 +63,7 @@ etc..
 "
 type main generic ref arr
 	ref_type ? set="ref"
+	function_head ? set="main" end="false"
 	array_decl ? set="arr" end="false"
 	type_ident_null set="main"
 	generic_expr ? set="generic";
@@ -363,6 +364,29 @@ KWFun identifier generic [arguments type code errorable public
 	code_block ? set="code" returnable="true";
 
 
+function_head generic [arguments type errorable
+	"fun" harderr="true"
+	generic_decl ? set="generic"
+	(
+	self_arg ? set="arguments"
+	arg ? set="arguments"
+	, ? back="1"
+	)
+	! ? set="errorable"
+	type_specifier ? set="type";
+
+
+anonymous_function [arguments type code
+	"fun" harderr="true"
+	(
+	self_arg ? set="arguments"
+	arg ? set="arguments"
+	, ? back="1"
+	)
+	type_specifier ? set="type"
+	code_block set="code" returnable="true";
+
+
 "
 impl Vec2 {
 	overload + (vec: &Vec2): &Vec2 {
@@ -380,7 +404,7 @@ KWOverload op arg type code generic errorable public
 	)
 	! ? set="errorable"
 	type_specifier ? set="type"
-	code_block set="code";
+	code_block ? set="code" returnable="true";
 
 
 self_arg args ref
@@ -452,12 +476,14 @@ set_op op
 	"'any" err="not a setting operator";
 
 expression [nodes
+	anonymous_function ? set="nodes" end="false"
 	value ? set="nodes"
 	operator ? set="nodes" back="1"
 	free_parenthesis ? set="nodes" back="1"
 	notempty ! nodes="nodes";
 
 expression_option [nodes
+	anonymous_function ? set="nodes" end="false"
 	value ? set="nodes"
 	operator ? set="nodes" back="1"
 	free_parenthesis ? set="nodes" back="1";

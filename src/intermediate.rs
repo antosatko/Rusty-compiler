@@ -68,7 +68,7 @@ pub mod dictionary {
                 let name = get_ident(&node);
                 if dictionary.register_id(name.to_string(), IdentifierKinds::Type) {
                     dictionary.types.push(TypeDef {
-                        kind: get_type(step_inside_val(&node, "type")),
+                        kind: get_type(step_inside_val(&node, "type"), errors),
                         identifier: name,
                         generics: get_generics_decl(&node, errors),
                         overloads: vec![],
@@ -98,9 +98,10 @@ pub mod dictionary {
                             ))
                         }
                     }
-                    result
-                        .fields
-                        .push((get_ident(key), get_type(step_inside_val(key, "type"))))
+                    result.fields.push((
+                        get_ident(key),
+                        get_type(step_inside_val(key, "type"), errors),
+                    ))
                 }
                 if dictionary.register_id(result.identifier.to_string(), IdentifierKinds::Struct) {
                     dictionary.structs.push(result);
@@ -134,10 +135,14 @@ pub mod dictionary {
             }
             "KWFun" => {
                 let fun = get_fun_siginifier(&node, errors);
-                if dictionary.register_id(fun.identifier.to_string(), IdentifierKinds::Function) {
+                let name = fun
+                    .identifier
+                    .clone()
+                    .expect("global function cannot be anonymous");
+                if dictionary.register_id(String::from(&name), IdentifierKinds::Function) {
                     dictionary.functions.push(fun);
                 } else {
-                    errors.push(ErrType::ConflictingNames(fun.identifier.to_string()))
+                    errors.push(ErrType::ConflictingNames(String::from(&name)))
                 }
             }
             "KWLet" => {
@@ -145,10 +150,10 @@ pub mod dictionary {
                 let undefKind = true;
                 let kind = if let Tokens::Text(txt) = &step_inside_val(node, "type").name {
                     if txt == "type_specifier" {
-                        Some(get_type(step_inside_val(
-                            step_inside_val(node, "type"),
-                            "type",
-                        )))
+                        Some(get_type(
+                            step_inside_val(step_inside_val(node, "type"), "type"),
+                            errors,
+                        ))
                     } else {
                         None
                     }
@@ -167,9 +172,11 @@ pub mod dictionary {
             }
             "KWConst" => {
                 let identifier = get_ident(&node);
-                let kind = get_type(step_inside_val(&step_inside_val(&node, "type"), "type"));
+                let kind = get_type(
+                    step_inside_val(&step_inside_val(&node, "type"), "type"),
+                    errors,
+                );
                 if dictionary.register_id(identifier.to_string(), IdentifierKinds::Variable) {
-                    // TODO: maybe change this idk
                     dictionary.constants.push(Constant {
                         kind,
                         identifier,
@@ -264,14 +271,17 @@ pub mod dictionary {
         let operator = get_operator(step_inside_val(&node, "op"));
         let generics = get_generics_decl(&node, errors);
         let kind = if let Some(kind) = try_step_inside_val(step_inside_val(&node, "type"), "type") {
-            Some(get_type(kind))
+            Some(get_type(kind, errors))
         } else {
             None
         };
         let arg = step_inside_val(&node, "arg");
         Overload {
             operator,
-            arg: (get_ident(&arg), get_type(step_inside_val(&arg, "type"))),
+            arg: (
+                get_ident(&arg),
+                get_type(step_inside_val(&arg, "type"), errors),
+            ),
             stack_size: None,
             location: None,
             return_type: kind,
@@ -281,13 +291,19 @@ pub mod dictionary {
         }
     }
     fn get_fun_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Function {
-        let identifier = get_ident(&node);
-        let generics = get_generics_decl(&node, errors);
-        let kind = if let Some(kind) = try_step_inside_val(step_inside_val(&node, "type"), "type") {
-            Some(get_type(kind))
+        let identifier = if node.nodes.contains_key("identitifer") {
+            Some(get_ident(&node))
         } else {
             None
         };
+        println!("good 1");
+        let generics = get_generics_decl(&node, errors);
+        let kind = if let Some(kind) = try_step_inside_val(step_inside_val(&node, "type"), "type") {
+            Some(get_type(kind, errors))
+        } else {
+            None
+        };
+        println!("good 2");
         let mut args = Vec::new();
         for arg in step_inside_arr(node, "arguments") {
             if let Tokens::Text(name) = &arg.name {
@@ -296,6 +312,7 @@ pub mod dictionary {
                         args.push((
                             String::from("self"),
                             ShallowType {
+                                is_fun: None,
                                 arr_len: None,
                                 refs: count_refs(&arg),
                                 main: vec![String::from("Self")],
@@ -310,7 +327,7 @@ pub mod dictionary {
                                 errors.push(ErrType::ConflictingArgsName(ident.to_string()));
                             }
                         }
-                        args.push((ident, get_type(step_inside_val(&arg, "type"))))
+                        args.push((ident, get_type(step_inside_val(&arg, "type"), errors)))
                     }
                     _ => {
                         panic!("this should never happen")
@@ -318,6 +335,15 @@ pub mod dictionary {
                 }
             }
         }
+        println!("good 3");
+        let can_yeet = step_inside_val(&node, "errorable").name
+            == Tokens::Operator(crate::lexer::tokenizer::Operators::Not);
+        println!("good 4");
+        let public = if node.nodes.contains_key("public") {
+            public(&node)
+        } else {
+            true
+        };
         /*
 
         to read the dictionary, you need to do this:
@@ -326,6 +352,7 @@ pub mod dictionary {
         load_dictionary(step_inside_arr(step_inside_val(node, "code"), "nodes"), &mut dict, &mut vec![]);
          */
         Function {
+            can_yeet,
             identifier,
             args,
             stack_size: None,
@@ -333,7 +360,7 @@ pub mod dictionary {
             return_type: kind,
             generics,
             src_loc: 0,
-            public: public(&node),
+            public: false,
         }
     }
     fn public(node: &Node) -> bool {
@@ -376,7 +403,21 @@ pub mod dictionary {
         }
         refs
     }
-    fn get_type(node: &Node) -> ShallowType {
+    fn get_type(node: &Node, errors: &mut Vec<ErrType>) -> ShallowType {
+        let main = step_inside_val(&node, "main");
+        if main.name == Tokens::Text(String::from("function_head")) {
+            println!("fun starts");
+            let fun = get_fun_siginifier(&main, errors);
+            println!("very good {:?}", fun);
+            let refs = count_refs(&node);
+            return ShallowType {
+                is_fun: Some(Box::new(fun)),
+                arr_len: None,
+                refs,
+                main: vec![],
+                generics: Vec::new(),
+            };
+        }
         let mut arr_len = None;
         let mut refs = count_refs(node);
         let main = if let Some(type_ident) =
@@ -409,17 +450,18 @@ pub mod dictionary {
             main
         };
         ShallowType {
+            is_fun: None,
             arr_len,
             refs,
             main,
-            generics: get_generics_expr(node),
+            generics: get_generics_expr(node, errors),
         }
     }
-    fn get_generics_expr(node: &Node) -> GenericExpr {
+    fn get_generics_expr(node: &Node, errors: &mut Vec<ErrType>) -> GenericExpr {
         let mut result = Vec::new();
         if let Some(arr) = try_step_inside_arr(step_inside_val(node, "generic"), "types") {
             for generic_expr in arr {
-                result.push(get_type(generic_expr));
+                result.push(get_type(generic_expr, errors));
             }
         }
         result
@@ -519,7 +561,7 @@ pub mod dictionary {
         /// translates to:
         /// "myFun:int:char"
         /// "nothing:"
-        pub identifier: String,
+        pub identifier: Option<String>,
         /// type of args in order
         pub args: Vec<(String, ShallowType)>,
         /// size needed to allocate on stack while function call (args.len() included)
@@ -527,6 +569,7 @@ pub mod dictionary {
         /// location in bytecode, so runtime knows where to jump
         pub location: Option<usize>,
         pub return_type: Option<ShallowType>,
+        pub can_yeet: bool,
         pub generics: Vec<GenericDecl>,
         /// location in source code
         pub src_loc: usize,
@@ -619,6 +662,7 @@ pub mod dictionary {
 
     #[derive(Debug)]
     pub struct ShallowType {
+        is_fun: Option<Box<Function>>,
         /// if Some then it is an array of that length
         arr_len: Option<usize>,
         refs: usize,
@@ -628,6 +672,7 @@ pub mod dictionary {
     impl ShallowType {
         pub fn empty() -> Self {
             ShallowType {
+                is_fun: None,
                 arr_len: None,
                 refs: 0,
                 main: vec![],
