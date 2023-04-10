@@ -1,6 +1,6 @@
 pub mod dictionary {
     use crate::{
-        lexer::tokenizer::Tokens,
+        lexer::tokenizer::{Tokens, Operators},
         tree_walker::tree_walker::{self, ArgNodeType, Err, Node},
     };
     use core::panic;
@@ -135,6 +135,7 @@ pub mod dictionary {
             }
             "KWFun" => {
                 let fun = get_fun_siginifier(&node, errors);
+                println!("fun: {fun:?}");
                 let name = fun
                     .identifier
                     .clone()
@@ -291,7 +292,7 @@ pub mod dictionary {
         }
     }
     fn get_fun_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Function {
-        let identifier = if node.nodes.contains_key("identitifer") {
+        let identifier = if node.nodes.contains_key("identifier") {
             Some(get_ident(&node))
         } else {
             None
@@ -389,7 +390,7 @@ pub mod dictionary {
         let mut refs = 0;
         if let Some(arr) = try_step_inside_arr(&step_inside_val(&node, "ref"), "refs") {
             for ref_type in arr {
-                if let Tokens::Ampersant = ref_type.name {
+                if let Tokens::Operator(Operators::Ampersant) = ref_type.name {
                     refs += 1;
                 }
                 if let Tokens::Operator(crate::lexer::tokenizer::Operators::And) = ref_type.name {

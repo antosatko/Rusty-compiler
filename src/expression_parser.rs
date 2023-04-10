@@ -11,19 +11,16 @@ use crate::tree_walker::tree_walker::Node;
 }*/
 
 
-/*pub struct ExprNode {
+pub struct ExprNode {
     left: Value,
     right: Value,
-    operator: Operator,
+    operator: crate::lexer::tokenizer::Operators,
 }
 pub struct Value {
     unary: Vec<Tokens>,
     value: ValueType,
 
 
-}
-pub enum Operator {
-    
 }
 pub enum ValueType {
     String(String),
@@ -40,12 +37,17 @@ pub struct Variable {
     root: String,
     /// for longer variables
     /// example: danda[5].touch_grass(9)
-    /// if danda is root, then rest is tail
+    /// danda is root .. rest is tail
     tail: Vec<TailNodes>
+}
+
+pub struct FunctionCall {
+    generic: Vec<ShallowType>,
+    args: Vec<ExprNode>,
 }
 pub enum TailNodes {
     Nested(String),
     Index(ExprNode),
-    Call(todo!()),
+    Call(FunctionCall),
     Cast(ShallowType),
-}*/
+}

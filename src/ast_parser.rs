@@ -290,20 +290,6 @@ mod formater {
                 tokens.remove(idx);
                 return 0;
             }
-            Tokens::Pipe => {
-                if let Tokens::Pipe = tokens[idx + 1] {
-                    tokens[idx] = Tokens::Operator(Operators::Or);
-                    tokens.remove(idx + 1);
-                    lines.remove(idx + 1);
-                }
-            }
-            Tokens::Ampersant => {
-                if let Tokens::Ampersant = tokens[idx + 1] {
-                    tokens[idx] = Tokens::Operator(Operators::And);
-                    tokens.remove(idx + 1);
-                    lines.remove(idx + 1);
-                }
-            }
             Tokens::Operator(op) => match op {
                 Operators::Plus => {
                     if let Tokens::Operator(Operators::Equal) = tokens[idx + 1] {
@@ -343,6 +329,20 @@ mod formater {
                 Operators::Equal => {
                     if let Tokens::Operator(Operators::Equal) = tokens[idx + 1] {
                         tokens[idx] = Tokens::Operator(Operators::DoubleEq);
+                        tokens.remove(idx + 1);
+                        lines.remove(idx + 1);
+                    }
+                }
+                Operators::Pipe => {
+                    if let Tokens::Operator(Operators::Pipe) = tokens[idx + 1] {
+                        tokens[idx] = Tokens::Operator(Operators::Or);
+                        tokens.remove(idx + 1);
+                        lines.remove(idx + 1);
+                    }
+                }
+                Operators::Ampersant => {
+                    if let Tokens::Operator(Operators::Ampersant) = tokens[idx + 1] {
+                        tokens[idx] = Tokens::Operator(Operators::And);
                         tokens.remove(idx + 1);
                         lines.remove(idx + 1);
                     }

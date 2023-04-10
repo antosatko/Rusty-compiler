@@ -21,7 +21,7 @@ impl Something {
         self.value = value
     }
 }
-// traits (still in development, currently not working)
+// traits
 trait Trait {
     fun method(): int
     overload + (other: Self): Self
@@ -30,3 +30,13 @@ trait Trait {
 const FUNCTION: fun(): int = fun(): int {
     return 1
 }
+// function array
+const FUNCTION_ARRAY: [fun(): int; 3] = [fun(): int {
+    return 1
+}, fun(): int {
+    return 2
+}, fun(): int {
+    return 3
+}]
+// 2d array
+const ARRAY_2D: [[int; 3]; 3] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]

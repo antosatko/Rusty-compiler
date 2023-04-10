@@ -57,8 +57,8 @@ pub mod tokenizer {
             "/" => Tokens::Operator(Operators::Slash),
             "=" => Tokens::Operator(Operators::Equal),
             "%" => Tokens::Operator(Operators::Mod),
-            "&" => Tokens::Ampersant,
-            "|" => Tokens::Pipe,
+            "&" => Tokens::Operator(Operators::Ampersant),
+            "|" => Tokens::Operator(Operators::Pipe),
             "!" => Tokens::Operator(Operators::Not),
             "?" => Tokens::Optional,
             ";" => Tokens::Semicolon,
@@ -98,8 +98,8 @@ pub mod tokenizer {
             Tokens::Operator(Operators::Mod) => "%".to_string(),
             Tokens::Operator(Operators::And) => "&&".to_string(),
             Tokens::Operator(Operators::Or) => "||".to_string(),
-            Tokens::Ampersant => "&".to_string(),
-            Tokens::Pipe => "|".to_string(),
+            Tokens::Operator(Operators::Ampersant) => "&".to_string(),
+            Tokens::Operator(Operators::Pipe) => "|".to_string(),
             Tokens::Operator(Operators::Not) => "!".to_string(),
             Tokens::Optional => "?".to_string(),
             Tokens::Semicolon => ";".to_string(),
@@ -162,8 +162,6 @@ pub mod tokenizer {
         DoubleColon,
         Number(usize, f64, char),
         Tab,
-        Pipe,
-        Ampersant,
         Deleted,
         EndOfFile,
     }
@@ -186,6 +184,8 @@ pub mod tokenizer {
         And,
         Or,
         Not,
+        Ampersant,
+        Pipe,
     }
 }
 

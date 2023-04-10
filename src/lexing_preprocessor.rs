@@ -194,6 +194,18 @@ pub mod lexing_preprocessor {
                         remove(tokens, idx + 1);
                     }
                 }
+                Operators::Pipe => {
+                    if let Tokens::Operator(Operators::Pipe) = tokens[idx + 1] {
+                        tokens[idx] = Tokens::Operator(Operators::Or);
+                        remove(tokens, idx + 1);
+                    }
+                }
+                Operators::Ampersant => {
+                    if let Tokens::Operator(Operators::Ampersant) = tokens[idx + 1] {
+                        tokens[idx] = Tokens::Operator(Operators::And);
+                        remove(tokens, idx + 1);
+                    }
+                }
                 _ => {}
             },
             Tokens::AngleBracket(bol) => {
@@ -209,18 +221,6 @@ pub mod lexing_preprocessor {
                         }
                         remove(tokens, idx + 1);
                     }
-                }
-            }
-            Tokens::Pipe => {
-                if let Tokens::Pipe = tokens[idx + 1] {
-                    tokens[idx] = Tokens::Operator(Operators::Or);
-                    remove(tokens, idx + 1);
-                }
-            }
-            Tokens::Ampersant => {
-                if let Tokens::Ampersant = tokens[idx + 1] {
-                    tokens[idx] = Tokens::Operator(Operators::And);
-                    remove(tokens, idx + 1);
                 }
             }
             _ => {
