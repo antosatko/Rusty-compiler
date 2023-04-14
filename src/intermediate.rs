@@ -1,7 +1,7 @@
 pub mod dictionary {
     use crate::{
         lexer::tokenizer::{Tokens, Operators},
-        tree_walker::tree_walker::{self, ArgNodeType, Err, Node},
+        tree_walker::tree_walker::{self, ArgNodeType, Err, Node}, expression_parser,
     };
     use core::panic;
     use std::{collections::HashMap, fs::DirEntry};
@@ -19,12 +19,12 @@ pub mod dictionary {
         use crate::type_check::TypesCheck;
         TypesCheck::index_types(&mut global_dict);
     }
-    fn load_dictionary(nodes: &Vec<Node>, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
+    pub fn load_dictionary(nodes: &Vec<Node>, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
         for node in nodes {
             load_node(node, dictionary, errors);
         }
     }
-    fn load_node(node: &Node, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
+    pub fn load_node(node: &Node, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
         let name = if let Tokens::Text(name) = &node.name {
             name
         } else {
@@ -135,7 +135,6 @@ pub mod dictionary {
             }
             "KWFun" => {
                 let fun = get_fun_siginifier(&node, errors);
-                println!("fun: {fun:?}");
                 let name = fun
                     .identifier
                     .clone()
@@ -187,6 +186,7 @@ pub mod dictionary {
                 } else {
                     errors.push(ErrType::ConflictingNames(identifier.to_string()))
                 }
+                println!("{:?}", expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors))
             }
             "KWImpl" => {
                 let ident = get_nested_ident(&step_inside_val(&node, "identifier"), errors);
@@ -250,14 +250,14 @@ pub mod dictionary {
             _ => {}
         }
     }
-    fn get_traits(node: &Node, errors: &mut Vec<ErrType>) -> Vec<NestedIdent> {
+    pub fn get_traits(node: &Node, errors: &mut Vec<ErrType>) -> Vec<NestedIdent> {
         let mut result = vec![];
         for tr in step_inside_arr(&node, "traits") {
             result.push(get_nested_ident(tr, errors));
         }
         result
     }
-    fn get_nested_ident(node: &Node, errors: &mut Vec<ErrType>) -> NestedIdent {
+    pub fn get_nested_ident(node: &Node, errors: &mut Vec<ErrType>) -> NestedIdent {
         let mut result = vec![];
         for nd in step_inside_arr(node, "nodes") {
             if let Tokens::Text(txt) = &step_inside_val(nd, "identifier").name {
@@ -268,7 +268,7 @@ pub mod dictionary {
         }
         result
     }
-    fn get_overload_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Overload {
+    pub fn get_overload_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Overload {
         let operator = get_operator(step_inside_val(&node, "op"));
         let generics = get_generics_decl(&node, errors);
         let kind = if let Some(kind) = try_step_inside_val(step_inside_val(&node, "type"), "type") {
@@ -291,7 +291,7 @@ pub mod dictionary {
             public: public(&node),
         }
     }
-    fn get_fun_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Function {
+    pub fn get_fun_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Function {
         let identifier = if node.nodes.contains_key("identifier") {
             Some(get_ident(&node))
         } else {
@@ -326,10 +326,10 @@ pub mod dictionary {
                                 errors.push(ErrType::ConflictingArgsName(ident.to_string()));
                             }
                         }
-                        args.push((ident, get_type(step_inside_val(&arg, "type"), errors)))
-                    }
+                        args.push((ident, get_type(step_inside_val(&arg, "type"), errors)));
+    }
                     _ => {
-                        panic!("this should never happen")
+                        unreachable!()
                     }
                 }
             }
@@ -360,16 +360,16 @@ pub mod dictionary {
             public: false,
         }
     }
-    fn public(node: &Node) -> bool {
+    pub fn public(node: &Node) -> bool {
         if let Tokens::Text(txt) = &step_inside_val(node, "public").name {
             return txt == "pub";
         }
         false
     }
-    fn get_operator(node: &Node) -> Tokens {
+    pub fn get_operator(node: &Node) -> Tokens {
         step_inside_val(node, "op").name.clone()
     }
-    fn get_ident(node: &Node) -> String {
+    pub fn get_ident(node: &Node) -> String {
         if let Tokens::Text(txt) =
             &step_inside_val(&step_inside_val(&node, "identifier"), "identifier").name
         {
@@ -377,7 +377,7 @@ pub mod dictionary {
         }
         panic!();
     }
-    fn try_get_ident(node: &Node) -> Option<String> {
+    pub fn try_get_ident(node: &Node) -> Option<String> {
         if let Some(val) = try_step_inside_val(&step_inside_val(&node, "identifier"), "identifier")
         {
             if let Tokens::Text(txt) = &val.name {
@@ -386,7 +386,7 @@ pub mod dictionary {
         }
         None
     }
-    fn count_refs(node: &Node) -> usize {
+    pub fn count_refs(node: &Node) -> usize {
         let mut refs = 0;
         if let Some(arr) = try_step_inside_arr(&step_inside_val(&node, "ref"), "refs") {
             for ref_type in arr {
@@ -400,7 +400,7 @@ pub mod dictionary {
         }
         refs
     }
-    fn get_type(node: &Node, errors: &mut Vec<ErrType>) -> ShallowType {
+    pub fn get_type(node: &Node, errors: &mut Vec<ErrType>) -> ShallowType {
         let main = step_inside_val(&node, "main");
         if main.name == Tokens::Text(String::from("function_head")) {
             let fun = get_fun_siginifier(&main, errors);
@@ -451,7 +451,7 @@ pub mod dictionary {
             generics: get_generics_expr(node, errors),
         }
     }
-    fn get_generics_expr(node: &Node, errors: &mut Vec<ErrType>) -> GenericExpr {
+    pub fn get_generics_expr(node: &Node, errors: &mut Vec<ErrType>) -> GenericExpr {
         let mut result = Vec::new();
         if let Some(arr) = try_step_inside_arr(step_inside_val(node, "generic"), "types") {
             for generic_expr in arr {
@@ -460,7 +460,7 @@ pub mod dictionary {
         }
         result
     }
-    fn get_generics_decl<'a>(node: &'a Node, errors: &mut Vec<ErrType>) -> Vec<GenericDecl> {
+    pub fn get_generics_decl<'a>(node: &'a Node, errors: &mut Vec<ErrType>) -> Vec<GenericDecl> {
         let mut generics = Vec::new();
         if let Some(arr) = try_step_inside_arr(step_inside_val(&node, "generic"), "identifiers") {
             for generic in arr {
@@ -476,22 +476,22 @@ pub mod dictionary {
         }
         generics
     }
-    fn get_token<'a>(node: &'a Node, ident: &'a str) -> &'a Tokens {
+    pub fn get_token<'a>(node: &'a Node, ident: &'a str) -> &'a Tokens {
         return &step_inside_val(&node, ident).name;
     }
-    fn step_inside_val<'a>(node: &'a Node, ident: &'a str) -> &'a Node {
+    pub fn step_inside_val<'a>(node: &'a Node, ident: &'a str) -> &'a Node {
         node.nodes.get(ident).unwrap().get_value()
     }
-    fn try_step_inside_val<'a>(node: &'a Node, ident: &'a str) -> Option<&'a Node> {
+    pub fn try_step_inside_val<'a>(node: &'a Node, ident: &'a str) -> Option<&'a Node> {
         match node.nodes.get(ident) {
             Some(arr) => Some(arr.get_value()),
             None => None,
         }
     }
-    fn step_inside_arr<'a>(node: &'a Node, ident: &'a str) -> &'a Vec<Node> {
+    pub fn step_inside_arr<'a>(node: &'a Node, ident: &'a str) -> &'a Vec<Node> {
         node.nodes.get(ident).unwrap().get_array()
     }
-    fn try_step_inside_arr<'a>(node: &'a Node, ident: &'a str) -> Option<&'a Vec<Node>> {
+    pub fn try_step_inside_arr<'a>(node: &'a Node, ident: &'a str) -> Option<&'a Vec<Node>> {
         match node.nodes.get(ident) {
             Some(arr) => Some(arr.get_array()),
             None => None,
@@ -690,7 +690,7 @@ pub mod dictionary {
                 traits: vec![],
             }
         }
-        fn index_of(&self, identifier: String) -> Option<usize> {
+        pub fn index_of(&self, identifier: String) -> Option<usize> {
             let mut i = 0;
             loop {
                 if i >= self.identifiers.len() {
@@ -702,7 +702,7 @@ pub mod dictionary {
                 i += 1;
             }
         }
-        fn type_of(&self, identifier: &str) -> Option<&IdentifierKinds> {
+        pub fn type_of(&self, identifier: &str) -> Option<&IdentifierKinds> {
             for (ident, kind) in &self.identifiers {
                 if ident == identifier {
                     return Some(kind);
@@ -710,17 +710,17 @@ pub mod dictionary {
             }
             None
         }
-        fn register_id(&mut self, name: String, kind: IdentifierKinds) -> bool {
+        pub fn register_id(&mut self, name: String, kind: IdentifierKinds) -> bool {
             if self.contains(&name) {
                 return false;
             }
             self.identifiers.push((name, kind));
             true
         }
-        fn force_id(&mut self, name: String, kind: IdentifierKinds) {
+        pub fn force_id(&mut self, name: String, kind: IdentifierKinds) {
             self.identifiers.push((name, kind));
         }
-        fn contains(&self, name: &String) -> bool {
+        pub fn contains(&self, name: &String) -> bool {
             for id in &self.identifiers {
                 if id.0 == *name {
                     return true;

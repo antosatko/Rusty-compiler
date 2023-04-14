@@ -84,7 +84,7 @@ fn main() {
                 "time: {}",
                 SystemTime::now().duration_since(time).unwrap().as_millis()
             );
-            if true {
+            if false {
                 if let Some(nodes) = &parsed_tree {
                     use tree_walker::tree_walker::ArgNodeType;
                     for nod in &nodes.nodes {

@@ -376,13 +376,15 @@ function_head generic [arguments type errorable
 	type_specifier ? set="type";
 
 
-anonymous_function [arguments type code
+anonymous_function [arguments type code generic errorable
 	"fun" harderr="true"
+	generic_decl ? set="generic"
 	(
 	self_arg ? set="arguments"
 	arg ? set="arguments"
 	, ? back="1"
 	)
+	! ? set="errorable"
 	type_specifier ? set="type"
 	code_block set="code" returnable="true";
 
@@ -494,11 +496,11 @@ tail is everything that extends basic variable/parenthesis
 example: danda[5].touch_grass(9)
               ~~~~~~~~~~~~~~~~~~ <- everything here is tail
 "
-variable_tail [nodes cast
+variable_tail [nodes
 	nested ? set="nodes" back="0"
 	idx ? set="nodes" back="1"
 	function_call ? set="nodes" back="2"
-	cast ? set="cast";
+	cast ? set="nodes";
 
 free_parenthesis parenthesis prepend tail
 	parenthesis harderr="true" set="parenthesis"
@@ -545,7 +547,7 @@ overloadable_op op
 	! ? set="op" end="true"
 	"'any" err="";
 
-parenthesis [expression cast
+parenthesis [expression
 	( harderr="true"
 	expression_option ? set="expression"
 	, ? back="1"
@@ -568,8 +570,8 @@ unary_op op
 	! ? set="op" end="true"
 	"'any" err="";
 
-variable value tail
-	ident set="value"
+variable identifier tail
+	ident set="identifier"
 	variable_tail set="tail";
 
 
