@@ -25,7 +25,7 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [x] preprocessing
 - [x] parsing ast rules
 - [x] generating ast
-- [x] ast analisys - partially
+- [x] ast analysis - partially
 - [ ] type check
 - [ ] binary generation
 
