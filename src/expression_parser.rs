@@ -1,11 +1,12 @@
-use crate::{lexer, intermediate};
-use intermediate::*;
-use crate::intermediate::AnalyzationError::ErrType;
-use crate::intermediate::dictionary::*;
-use crate::lexer::tokenizer::{Tokens, Operators};
-use crate::tree_walker::tree_walker::Node;
-use intermediate::dictionary::*;
+use core::panic;
 
+use crate::intermediate::dictionary::*;
+use crate::intermediate::AnalyzationError::ErrType;
+use crate::lexer::tokenizer::{Operators, Tokens};
+use crate::tree_walker::tree_walker::Node;
+use crate::{intermediate, lexer};
+use intermediate::dictionary::*;
+use intermediate::*;
 
 pub fn expr_into_tree(node: &Node, errors: &mut Vec<ErrType>) -> ExprNode {
     let mut expr = ExprNode {
@@ -15,18 +16,19 @@ pub fn expr_into_tree(node: &Node, errors: &mut Vec<ErrType>) -> ExprNode {
     };
     let nodes = step_inside_arr(&node, "nodes");
     if nodes.len() == 0 {
-        return expr
+        return expr;
     }
     if let Tokens::Text(str) = &nodes[0].name {
         if str == "anonymous_function" {
-            expr.left = Some(ValueType::AnonymousFunction(get_fun_siginifier(&nodes[0], errors)));
-            return expr
+            expr.left = Some(ValueType::AnonymousFunction(get_fun_siginifier(
+                &nodes[0], errors,
+            )));
+            return expr;
         }
     }
     let transform = transform_expr(&nodes, errors);
     println!("transformed: {:?}", transform);
-    for nd in nodes {
-    }
+    for nd in nodes {}
     expr
 }
 
@@ -38,30 +40,74 @@ pub fn transform_expr(nodes: &Vec<Node>, errors: &mut Vec<ErrType>) -> Vec<Value
             continue;
         }
         if let Some(val) = try_get_value(&node, errors) {
-            result.push(ValueType::Value(val));
+            result.push(val);
             continue;
         }
     }
     result
 }
 
-pub fn try_get_value(node: &Node, errors: &mut Vec<ErrType>) -> Option<Variable> {
+pub fn try_get_value(node: &Node, errors: &mut Vec<ErrType>) -> Option<ValueType> {
     if let Tokens::Text(txt) = &node.name {
-        if txt != "value" {return None;}
+        if txt != "value" {
+            return None;
+        }
     }
     let prepend = get_prepend(step_inside_val(&node, "prepend"), errors);
-    let car = try_get_variable(step_inside_val(&node, "value"), errors);
+    if let Some(car) = try_get_variable(step_inside_val(&node, "value"), errors) {
+        return Some(ValueType::Value(Variable {
+            unary: prepend.2,
+            refs: prepend.0,
+            modificatior: prepend.1,
+            root: car.0,
+            tail: car.1,
+        }));
+    }
+    if let Some(lit) = try_get_literal(step_inside_val(&node, "value"), errors, &prepend) {
+        return Some(ValueType::Literal(lit));
+    }
     None
 }
 
-pub fn try_get_variable(node: &Node, errors: &mut Vec<ErrType>) -> Option<Variable> {
+pub fn try_get_literal(node: &Node, errors: &mut Vec<ErrType>, prepend: &(usize, Option<String>, Option<Operators>)) -> Option<Literal> {
     if let Tokens::Text(txt) = &node.name {
-        if txt != "variable" {return None;}
+        if txt != "literal" {
+            return None;
+        }
+    }
+    let this = step_inside_val(&node, "value");
+    if let Tokens::Number(_, _, _) = &this.name {
+        return Some(Literal {
+            unary: prepend.2,
+            refs: prepend.0,
+            modificatior: prepend.1.clone(),
+            value: Literals::Number(this.name.clone()),
+        });
+    }
+    if let Tokens::String(str) = &this.name {
+        return Some(Literal {
+            unary: prepend.2,
+            refs: prepend.0,
+            modificatior: prepend.1.clone(),
+            value: Literals::String(str.clone()),
+        });
+    }
+    None
+}
+
+pub fn try_get_variable(
+    node: &Node,
+    errors: &mut Vec<ErrType>,
+) -> Option<(String, Vec<TailNodes>)> {
+    if let Tokens::Text(txt) = &node.name {
+        if txt != "variable" {
+            return None;
+        }
     }
     let ident = get_ident(&node);
     let tail = get_tail(step_inside_val(&node, "tail"), errors);
     println!("tail: {:?}", tail);
-    None
+    Some((ident, tail))
 }
 
 pub fn get_args(node: &Node, errors: &mut Vec<ErrType>) -> Vec<ExprNode> {
@@ -99,20 +145,27 @@ pub fn get_tail(node: &Node, errors: &mut Vec<ErrType>) -> Vec<TailNodes> {
     tail
 }
 
-pub fn get_prepend(node: &Node, errors: &mut Vec<ErrType>) -> (usize, Option<String>, Option<Operators>) {
+pub fn get_prepend(
+    node: &Node,
+    errors: &mut Vec<ErrType>,
+) -> (usize, Option<String>, Option<Operators>) {
     let refs = count_refs(&node);
     let modificator = if let Tokens::Text(txt) = &step_inside_val(&node, "keywords").name {
-        Some(txt.to_string())
-    }else {
+        if txt == "'none" {
+            None
+        }else {
+            Some(txt.to_string())
+        }
+    } else {
         None
     };
     let unary = if let Some(un) = try_step_inside_val(&step_inside_val(&node, "unary"), "op") {
         if let Tokens::Operator(op) = un.name {
             Some(op)
-        }else {
+        } else {
             None
         }
-    }else {
+    } else {
         None
     };
     (refs, modificator, unary)
@@ -120,10 +173,12 @@ pub fn get_prepend(node: &Node, errors: &mut Vec<ErrType>) -> (usize, Option<Str
 
 pub fn try_get_op(node: &Node, errors: &mut Vec<ErrType>) -> Option<Operators> {
     if let Tokens::Text(txt) = &node.name {
-        if txt != "operator" {return None}
+        if txt != "operator" {
+            return None;
+        }
     }
     if let Tokens::Operator(op) = step_inside_val(&node, "op").name {
-        return Some(op)
+        return Some(op);
     }
     None
 }
@@ -142,10 +197,10 @@ pub enum ValueType {
     Expression(Box<ExprNode>),
     /// only for inner functionality
     Operator(Operators),
-    Value(Variable)
+    Value(Variable),
 }
 impl ValueType {
-    pub fn fun(fun: Function) -> ValueType{
+    pub fn fun(fun: Function) -> ValueType {
         ValueType::AnonymousFunction(fun)
     }
     pub fn value(val: Literal) -> ValueType {
@@ -154,10 +209,10 @@ impl ValueType {
 }
 #[derive(Debug)]
 pub struct Literal {
-    unary: Vec<Tokens>,
+    unary: Option<Operators>,
     refs: usize,
     /// atm only keyword new, so bool would be sufficient, but who knows what will be in the future updates
-    modificatior: Vec<String>,
+    modificatior: Option<String>,
     value: Literals,
 }
 #[derive(Debug)]
@@ -173,10 +228,10 @@ pub enum ArrayRule {
 }
 #[derive(Debug)]
 pub struct Variable {
-    unary: Vec<Tokens>,
+    unary: Option<Operators>,
     refs: usize,
     /// atm only keyword new, so bool would be sufficient, but who knows what will be in the future updates
-    modificatior: Vec<String>,
+    modificatior: Option<String>,
     /// for longer variables
     /// example: danda[5].touch_grass(9)
     ///          ~~~~~ <- this is considered a root
@@ -184,7 +239,7 @@ pub struct Variable {
     /// for longer variables
     /// example: danda[5].touch_grass(9)
     /// danda is root .. rest is tail
-    tail: Vec<TailNodes>
+    tail: Vec<TailNodes>,
 }
 
 #[derive(Debug)]
@@ -202,7 +257,7 @@ pub enum TailNodes {
 
 pub fn try_is_operator(node: &Node, errors: &mut Vec<ErrType>) -> Option<Operators> {
     if let Tokens::Operator(op) = &node.name {
-        return Some(*op)
+        return Some(*op);
     }
     None
 }

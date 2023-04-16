@@ -559,7 +559,7 @@ value_prepend ref keywords unary
 	unary_op ? set="unary";
 
 value value prepend
-	value_prepend ? set="prepend"
+	value_prepend set="prepend"
 	variable ? set="value" end="false"
 	literal ? set="value" end="false"
 	free_parenthesis ? set="value" end="false"
