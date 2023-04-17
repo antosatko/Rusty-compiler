@@ -206,23 +206,23 @@ pub mod lexing_preprocessor {
                         remove(tokens, idx + 1);
                     }
                 }
-                _ => {}
-            },
-            Tokens::AngleBracket(bol) => {
-                if let Tokens::Operator(eq) = tokens[idx + 1] {
-                    if let Operators::Equal = eq {
-                        match *bol {
-                            true => {
-                                tokens[idx] = Tokens::Operator(Operators::LessEq)
+                Operators::AngleBracket(bol) => {
+                    if let Tokens::Operator(eq) = tokens[idx + 1] {
+                        if let Operators::Equal = eq {
+                            match *bol {
+                                true => {
+                                    tokens[idx] = Tokens::Operator(Operators::LessEq)
+                                }
+                                false => {
+                                    tokens[idx] = Tokens::Operator(Operators::MoreEq)
+                                }
                             }
-                            false => {
-                                tokens[idx] = Tokens::Operator(Operators::MoreEq)
-                            }
+                            remove(tokens, idx + 1);
                         }
-                        remove(tokens, idx + 1);
                     }
                 }
-            }
+                _ => {}
+            },
             _ => {
             }
         }

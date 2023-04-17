@@ -481,14 +481,12 @@ expression [nodes
 	anonymous_function ? set="nodes" end="false"
 	value ? set="nodes"
 	operator ? set="nodes" back="1"
-	free_parenthesis ? set="nodes" back="1"
 	notempty ! nodes="nodes";
 
 expression_option [nodes
 	anonymous_function ? set="nodes" end="false"
 	value ? set="nodes"
-	operator ? set="nodes" back="1"
-	free_parenthesis ? set="nodes" back="1";
+	operator ? set="nodes" back="1";
 
 
 "
@@ -502,8 +500,10 @@ variable_tail [nodes
 	function_call ? set="nodes" back="2"
 	cast ? set="nodes";
 
-free_parenthesis parenthesis prepend tail
-	parenthesis harderr="true" set="parenthesis"
+free_parenthesis expression tail
+	( harderr="true"
+	expression set="expression"
+	)
 	variable_tail set="tail";
 
 operator op
@@ -547,9 +547,9 @@ overloadable_op op
 	! ? set="op" end="true"
 	"'any" err="";
 
-parenthesis [expression
+parenthesis [expressions
 	( harderr="true"
-	expression_option ? set="expression"
+	expression_option ? set="expressions"
 	, ? back="1"
 	);
 

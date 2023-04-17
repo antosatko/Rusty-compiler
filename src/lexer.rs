@@ -71,8 +71,8 @@ pub mod tokenizer {
             ")" => Tokens::Parenteses(true),
             "{" => Tokens::CurlyBracket(false),
             "}" => Tokens::CurlyBracket(true),
-            "<" => Tokens::AngleBracket(false),
-            ">" => Tokens::AngleBracket(true),
+            "<" => Tokens::Operator(Operators::AngleBracket(false)),
+            ">" => Tokens::Operator(Operators::AngleBracket(true)),
             "[" => Tokens::SquareBracket(false),
             "]" => Tokens::SquareBracket(true),
             " " => Tokens::Space,
@@ -112,8 +112,8 @@ pub mod tokenizer {
             Tokens::Parenteses(true) => ")".to_string(),
             Tokens::CurlyBracket(false) => "{".to_string(),
             Tokens::CurlyBracket(true) => "}".to_string(),
-            Tokens::AngleBracket(false) => "<".to_string(),
-            Tokens::AngleBracket(true) => ">".to_string(),
+            Tokens::Operator(Operators::AngleBracket(false)) => "<".to_string(),
+            Tokens::Operator(Operators::AngleBracket(true)) => ">".to_string(),
             Tokens::SquareBracket(false) => "[".to_string(),
             Tokens::SquareBracket(true) => "]".to_string(),
             Tokens::Space => " ".to_string(),
@@ -143,8 +143,6 @@ pub mod tokenizer {
         CurlyBracket(bool),
         /// opening 0, closing 1
         SquareBracket(bool),
-        /// opening 0, closing 1
-        AngleBracket(bool),
         Operator(Operators),
         Colon,
         Dot,
@@ -186,6 +184,8 @@ pub mod tokenizer {
         Not,
         Ampersant,
         Pipe,
+        /// opening 0, closing 1
+        AngleBracket(bool),
     }
 }
 

@@ -347,20 +347,20 @@ mod formater {
                         lines.remove(idx + 1);
                     }
                 }
-                _ => {}
-            },
-            Tokens::AngleBracket(bol) => {
-                if let Tokens::Operator(eq) = tokens[idx + 1] {
-                    if let Operators::Equal = eq {
-                        tokens[idx] = match *bol {
-                            true => Tokens::Operator(Operators::LessEq),
-                            false => Tokens::Operator(Operators::MoreEq),
-                        };
-                        tokens.remove(idx + 1);
-                        lines.remove(idx + 1);
+                Operators::AngleBracket(bol) => {
+                    if let Tokens::Operator(eq) = tokens[idx + 1] {
+                        if let Operators::Equal = eq {
+                            tokens[idx] = match *bol {
+                                true => Tokens::Operator(Operators::LessEq),
+                                false => Tokens::Operator(Operators::MoreEq),
+                            };
+                            tokens.remove(idx + 1);
+                            lines.remove(idx + 1);
+                        }
                     }
                 }
-            }
+                _ => {}
+            },
             _ => {}
         }
         1

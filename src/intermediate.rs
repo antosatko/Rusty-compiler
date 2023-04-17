@@ -731,6 +731,8 @@ pub mod dictionary {
     }
 }
 pub mod AnalyzationError {
+    use crate::expression_parser;
+
     use super::dictionary::IdentifierKinds;
 
     #[derive(Debug)]
@@ -749,5 +751,7 @@ pub mod AnalyzationError {
         NonExistentIdentifier(String),
         /// field line col | occurs when you try to assign same identifier to two or more struct fields
         StructVariantAssignedIdent(String, (usize, usize)),
+        /// transform_error | occurs when there is an error in expression
+        TreeTransformError(expression_parser::TreeTransformError)
     }
 }

@@ -59,7 +59,7 @@ pub mod syntax {
                                 brackets.0 += 1;
                             }
                         }
-                        Tokens::AngleBracket(bol) => {
+                        Tokens::Operators(AngleBracket(bol) => {
                             if bol {
                                 brackets.1 -= 1;
                                 if brackets.1 == -1 {
@@ -67,7 +67,7 @@ pub mod syntax {
                                 }
                             } else {
                                 for tok in &end {
-                                    if let Tokens::AngleBracket(boool) = tok {
+                                    if let Tokens::Operators(AngleBracket(boool) = tok {
                                         if brackets.0 == 0
                                             && brackets.1 == 0
                                             && brackets.2 == 0

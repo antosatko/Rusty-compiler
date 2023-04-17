@@ -26,10 +26,73 @@ pub fn expr_into_tree(node: &Node, errors: &mut Vec<ErrType>) -> ExprNode {
             return expr;
         }
     }
-    let transform = transform_expr(&nodes, errors);
-    println!("transformed: {:?}", transform);
-    for nd in nodes {}
+    let mut transform = transform_expr(&nodes, errors);
+    match list_into_tree(&mut transform) {
+        Ok(tree) => expr = tree,
+        Err(err) => {
+            errors.push(ErrType::TreeTransformError(err));
+        }
+    }
     expr
+}
+
+/// %/*-+<>==!=<=>=&&||
+const ORDER_OF_OPERATIONS: [Operators; 13] = [
+    Operators::Mod,
+    Operators::Star,
+    Operators::Slash,
+    Operators::Plus,
+    Operators::Minus,
+    Operators::AngleBracket(false),
+    Operators::AngleBracket(true),
+    Operators::Equal,
+    Operators::NotEqual,
+    Operators::LessEq,
+    Operators::MoreEq,
+    Operators::And,
+    Operators::Or,
+];
+
+/// recursive function that transforms list of values into tree
+pub fn list_into_tree(list: &mut Vec<ValueType>) -> Result<ExprNode, TreeTransformError> {
+    let mut result = ExprNode {
+        left: None,
+        right: None,
+        operator: None,
+    };
+    for op in &ORDER_OF_OPERATIONS {
+        let mut i = 0;
+        while i < list.len() {
+            if let ValueType::Operator(op2) = &list[i] {
+                if op == op2 {
+                    // todo: check if there is no operator on the left or right
+                    // use this only for inspiration 
+                    if i == 0 {
+                        return Err(TreeTransformError::NoValue);
+                    }
+                    if i == list.len() - 1 {
+                        return Err(TreeTransformError::ExcessOperator);
+                    }
+                    result.operator = Some(*op);
+                    result.left = Some(list.remove(i - 1));
+                    result.right = Some(list.remove(i));
+                    // remove the operator
+                    list.remove(i - 1);
+                    return Ok(result);
+                }
+            }
+            i += 1;
+        }
+    }
+    Ok(result)
+}
+
+#[derive(Debug)]
+pub enum TreeTransformError {
+    NoValue,
+    ExcessOperator,
+    ExcessValue,
+    NotImplementedCuzLazy,
 }
 
 pub fn transform_expr(nodes: &Vec<Node>, errors: &mut Vec<ErrType>) -> Vec<ValueType> {
@@ -66,10 +129,17 @@ pub fn try_get_value(node: &Node, errors: &mut Vec<ErrType>) -> Option<ValueType
     if let Some(lit) = try_get_literal(step_inside_val(&node, "value"), errors, &prepend) {
         return Some(ValueType::Literal(lit));
     }
+    if let Some(paren) = try_get_parenthesis(step_inside_val(&node, "value"), errors) {
+        return Some(ValueType::Parenthesis(Box::new(paren.0), paren.1));
+    }
     None
 }
 
-pub fn try_get_literal(node: &Node, errors: &mut Vec<ErrType>, prepend: &(usize, Option<String>, Option<Operators>)) -> Option<Literal> {
+pub fn try_get_literal(
+    node: &Node,
+    errors: &mut Vec<ErrType>,
+    prepend: &(usize, Option<String>, Option<Operators>),
+) -> Option<Literal> {
     if let Tokens::Text(txt) = &node.name {
         if txt != "literal" {
             return None;
@@ -112,8 +182,24 @@ pub fn try_get_variable(
 
 pub fn get_args(node: &Node, errors: &mut Vec<ErrType>) -> Vec<ExprNode> {
     let mut result = vec![];
-    // TODO: implement
+    for child in step_inside_arr(&node, "expressions") {
+        result.push(expr_into_tree(&child, errors));
+    }
     result
+}
+
+pub fn try_get_parenthesis(
+    node: &Node,
+    errors: &mut Vec<ErrType>,
+) -> Option<(ExprNode, Vec<TailNodes>)> {
+    if let Tokens::Text(txt) = &node.name {
+        if txt != "free_parenthesis" {
+            return None;
+        }
+    }
+    let tail = get_tail(step_inside_val(&node, "tail"), errors);
+    let expression = expr_into_tree(step_inside_val(&node, "expression"), errors);
+    Some((expression, tail))
 }
 
 pub fn get_tail(node: &Node, errors: &mut Vec<ErrType>) -> Vec<TailNodes> {
@@ -131,7 +217,7 @@ pub fn get_tail(node: &Node, errors: &mut Vec<ErrType>) -> Vec<TailNodes> {
             }
             if txt == "function_call" {
                 let generic = get_generics_expr(&child, errors);
-                let args = get_args(&child, errors);
+                let args = get_args(step_inside_val(&child, "parenthesis"), errors);
                 tail.push(TailNodes::Call(FunctionCall { generic, args }));
                 continue;
             }
@@ -153,7 +239,7 @@ pub fn get_prepend(
     let modificator = if let Tokens::Text(txt) = &step_inside_val(&node, "keywords").name {
         if txt == "'none" {
             None
-        }else {
+        } else {
             Some(txt.to_string())
         }
     } else {
@@ -194,6 +280,7 @@ pub enum ValueType {
     Literal(Literal),
     AnonymousFunction(Function),
     /// parenthesis
+    Parenthesis(Box<ExprNode>, Vec<TailNodes>),
     Expression(Box<ExprNode>),
     /// only for inner functionality
     Operator(Operators),
