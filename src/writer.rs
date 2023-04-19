@@ -1,7 +1,7 @@
 pub mod writer {
     use core::panic;
 
-    use crate::runtime::runtime_types::{Instructions, Types};
+    use runtime::runtime::runtime_types::{Instructions, Types};
     pub fn write(code: &Vec<Instructions>, consts: &Vec<Types>, file_name: &str) {
         use std::fs::File;
         use std::io::prelude::*;

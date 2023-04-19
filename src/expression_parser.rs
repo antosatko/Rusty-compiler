@@ -1,4 +1,5 @@
 use core::panic;
+use std::fmt::format;
 
 use crate::intermediate::dictionary::*;
 use crate::intermediate::AnalyzationError::ErrType;
@@ -8,39 +9,31 @@ use crate::{intermediate, lexer};
 use intermediate::dictionary::*;
 use intermediate::*;
 
-pub fn expr_into_tree(node: &Node, errors: &mut Vec<ErrType>) -> ExprNode {
-    let mut expr = ExprNode {
-        left: None,
-        right: None,
-        operator: None,
-    };
+pub fn expr_into_tree(node: &Node, errors: &mut Vec<ErrType>) -> ValueType {
     let nodes = step_inside_arr(&node, "nodes");
     if nodes.len() == 0 {
-        return expr;
+        return ValueType::Expression(Box::new(ExprNode::blank()));
     }
     if let Tokens::Text(str) = &nodes[0].name {
         if str == "anonymous_function" {
-            expr.left = Some(ValueType::AnonymousFunction(get_fun_siginifier(
-                &nodes[0], errors,
-            )));
-            return expr;
+            return ValueType::AnonymousFunction(get_fun_siginifier(&nodes[0], errors));
         }
     }
     let mut transform = transform_expr(&nodes, errors);
-    match list_into_tree(&mut transform) {
-        Ok(tree) => expr = tree,
-        Err(err) => {
-            errors.push(ErrType::TreeTransformError(err));
-        }
+    let res = list_into_tree(&mut transform);
+    if let Ok(val) = res {
+        return val;
+    } else {
+        println!("error occured while parsing expression: {:?}", res);
+        unreachable!("Blank expression parse error")
     }
-    expr
 }
 
 /// %/*-+<>==!=<=>=&&||
 const ORDER_OF_OPERATIONS: [Operators; 13] = [
     Operators::Mod,
-    Operators::Star,
     Operators::Slash,
+    Operators::Star,
     Operators::Plus,
     Operators::Minus,
     Operators::AngleBracket(false),
@@ -54,19 +47,27 @@ const ORDER_OF_OPERATIONS: [Operators; 13] = [
 ];
 
 /// recursive function that transforms list of values into tree
-pub fn list_into_tree(list: &mut Vec<ValueType>) -> Result<ExprNode, TreeTransformError> {
+pub fn list_into_tree(list: &mut Vec<ValueType>) -> Result<ValueType, TreeTransformError> {
     let mut result = ExprNode {
         left: None,
         right: None,
         operator: None,
     };
+    if list.len() == 0 {
+        return Ok(ValueType::Blank);
+    }
+    if list.len() == 1 {
+        if let ValueType::Operator(_) = &list[0] {
+            return Err(TreeTransformError::ExcessOperator);
+        }
+        return Ok(list.pop().unwrap());
+    }
     for op in &ORDER_OF_OPERATIONS {
         let mut i = 0;
+        // if the list consists of only 1 value and it is not an operator, return it
         while i < list.len() {
             if let ValueType::Operator(op2) = &list[i] {
                 if op == op2 {
-                    // todo: check if there is no operator on the left or right
-                    // use this only for inspiration 
                     if i == 0 {
                         return Err(TreeTransformError::NoValue);
                     }
@@ -74,17 +75,39 @@ pub fn list_into_tree(list: &mut Vec<ValueType>) -> Result<ExprNode, TreeTransfo
                         return Err(TreeTransformError::ExcessOperator);
                     }
                     result.operator = Some(*op);
-                    result.left = Some(list.remove(i - 1));
-                    result.right = Some(list.remove(i));
-                    // remove the operator
-                    list.remove(i - 1);
-                    return Ok(result);
+                    // split list into 2 lists using index
+                    list.remove(i);
+                    let mut right = list.split_off(i);
+                    // call this function recursively for each side
+                    // left side
+                    if list.len() == 0 {
+                        return Err(TreeTransformError::NoValue);
+                    }
+                    let res = list_into_tree(list);
+                    if let Ok(left) = res {
+                        result.left = Some(left);
+                    } else {
+                        return res;
+                    }
+                    // right side
+                    if right.len() == 0 {
+                        return Err(TreeTransformError::NoValue);
+                    }
+                    let res = list_into_tree(&mut right);
+                    if let Ok(right) = res {
+                        result.right = Some(right);
+                    } else {
+                        return res;
+                    }
+
+                    // return result
+                    return Ok(ValueType::Expression(Box::new(result)));
                 }
             }
             i += 1;
         }
     }
-    Ok(result)
+    return Err(TreeTransformError::NotImplementedCuzLazy);
 }
 
 #[derive(Debug)]
@@ -176,11 +199,10 @@ pub fn try_get_variable(
     }
     let ident = get_ident(&node);
     let tail = get_tail(step_inside_val(&node, "tail"), errors);
-    println!("tail: {:?}", tail);
     Some((ident, tail))
 }
 
-pub fn get_args(node: &Node, errors: &mut Vec<ErrType>) -> Vec<ExprNode> {
+pub fn get_args(node: &Node, errors: &mut Vec<ErrType>) -> Vec<ValueType> {
     let mut result = vec![];
     for child in step_inside_arr(&node, "expressions") {
         result.push(expr_into_tree(&child, errors));
@@ -191,7 +213,7 @@ pub fn get_args(node: &Node, errors: &mut Vec<ErrType>) -> Vec<ExprNode> {
 pub fn try_get_parenthesis(
     node: &Node,
     errors: &mut Vec<ErrType>,
-) -> Option<(ExprNode, Vec<TailNodes>)> {
+) -> Option<(ValueType, Vec<TailNodes>)> {
     if let Tokens::Text(txt) = &node.name {
         if txt != "free_parenthesis" {
             return None;
@@ -275,16 +297,37 @@ pub struct ExprNode {
     right: Option<ValueType>,
     operator: Option<Operators>,
 }
+impl ExprNode {
+    pub fn new(
+        left: Option<ValueType>,
+        right: Option<ValueType>,
+        operator: Option<Operators>,
+    ) -> ExprNode {
+        ExprNode {
+            left,
+            right,
+            operator,
+        }
+    }
+    pub fn blank() -> ExprNode {
+        ExprNode {
+            left: None,
+            right: None,
+            operator: None,
+        }
+    }
+}
 #[derive(Debug)]
 pub enum ValueType {
     Literal(Literal),
     AnonymousFunction(Function),
     /// parenthesis
-    Parenthesis(Box<ExprNode>, Vec<TailNodes>),
+    Parenthesis(Box<ValueType>, Vec<TailNodes>),
     Expression(Box<ExprNode>),
     /// only for inner functionality
     Operator(Operators),
     Value(Variable),
+    Blank,
 }
 impl ValueType {
     pub fn fun(fun: Function) -> ValueType {
@@ -332,12 +375,12 @@ pub struct Variable {
 #[derive(Debug)]
 pub struct FunctionCall {
     generic: Vec<ShallowType>,
-    args: Vec<ExprNode>,
+    args: Vec<ValueType>,
 }
 #[derive(Debug)]
 pub enum TailNodes {
     Nested(String),
-    Index(ExprNode),
+    Index(ValueType),
     Call(FunctionCall),
     Cast(Vec<String>),
 }
