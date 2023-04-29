@@ -15,6 +15,7 @@ mod tree_walker;
 mod intermediate;
 mod type_check;
 mod expression_parser;
+mod dll_loader;
 
 fn main() {
     let mut args = env::args();
@@ -134,6 +135,18 @@ fn main() {
             } else {
                 println!("failed to parse AST properly")
             }
+        }
+        "libload" => {
+            let file = match args.nth(0) {
+                Some(file) => file,
+                None => panic!("File not specified."),
+            };
+            println!("Loading library '{file}' starts.");
+            let mut string = String::new();
+            let mut file =
+                File::open(file).expect(&format!("File not found. ({})", path).to_owned());
+            file.read_to_string(&mut string).expect("neco se pokazilo");
+            dll_loader::load( &mut string.into_bytes());
         }
         _ => {
             println!("Unknown command: {}", cmd);

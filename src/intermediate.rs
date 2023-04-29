@@ -673,6 +673,34 @@ pub mod dictionary {
                 generics: vec![],
             }
         }
+        pub fn cmp(&self, other: &Self, dict: &Dictionary) -> TypeComparison {
+            /*// check if both have the same refs and if not return difference in refs
+            if self.refs != other.refs {
+                return TypeComparison::ReferenceDiff(self.refs as i32 - other.refs as i32);
+            }
+            // check if one of them as an array and if so return difference in array length
+            if self.arr_len.is_some() || other.arr_len.is_some() {
+                if self.arr_len.is_none() {
+                    return TypeComparison::NotEqual;
+                }
+                if other.arr_len.is_none() {
+                    return TypeComparison::NotEqual;
+                }
+                return TypeComparison::ArrayDiff(self.arr_len.unwrap(), other.arr_len.unwrap());
+            }
+            if self.main != other.main {
+                return TypeComparison::Different;
+            }
+            if self.generics.len() != other.generics.len() {
+                return TypeComparison::Different;
+            }
+            for (i, gen) in self.generics.iter().enumerate() {
+                if gen != &other.generics[i] {
+                    return TypeComparison::Different;
+                }
+            }*/
+            TypeComparison::Equal
+        }
     }
 
     impl Dictionary {
@@ -728,6 +756,19 @@ pub mod dictionary {
             }
             false
         }
+    }
+    pub enum TypeComparison {
+        /// types are equal
+        Equal,
+        /// types are not equal
+        NotEqual,
+        /// types are not equal, but they are compatible
+        Compatible,
+        /// types will be equal after referencing or dereferencing
+        ReferenceDiff(i32),
+        /// both are arrays, but they have different lengths
+        /// len1 len2
+        ArrayDiff(usize, usize)
     }
 }
 pub mod AnalyzationError {

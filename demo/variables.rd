@@ -1,7 +1,7 @@
 // here i test behavior of parser for variables and expressions
 
-const NUMBER: int = 1 + -50 * danda.getName[5+6]<sedm>(NameTypes.FIRST) as int / (5f) as int
-const STRING: string = "string"
+const ABOMINATION: int = 1 + -50 * danda.getName[5+6]<sedm>(NameTypes.FIRST) as int / (5f) as int
+const CIRNO: string = "fumo"
 const BOOL: bool = true
 const ARRAY: [int; 3] = [1, 2, 3]
 const ARRAY_BUILDER: [int; 3] = [5; 5]
