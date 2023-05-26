@@ -66,7 +66,7 @@ type_ident_null [nodes nullable
 [int; 60]
 "
 array_decl type size
-	[
+	[ harderr="true"
 	type set="type"
 	;
 	num_none set="size"
@@ -87,6 +87,21 @@ KWType identifier type mem
 	type set="type"
 	;?;
 
+KWEnum identifier [values assign
+	"enum" harderr="true"
+	ident set="identifier"
+	{
+	enum_value ? set="values"
+	, ? back="1"
+	};
+
+enum_value identifier default
+	ident set="identifier"
+	= ? harderr="true"
+		"'int" ? set="default" end="true"
+		"'number" ? err="expected int at enum variant"
+		"'any" ? err="expected int at enum variant";
+
 "
 struct Danda <T> {
 	name: String,
@@ -94,10 +109,11 @@ struct Danda <T> {
 	things: [T, 50],
 }
 "
-KWStruct identifier [keys generic
+KWStruct identifier [keys generic assign
 	"struct" harderr="true"
 	ident set="identifier"
 	generic_decl ? set="generic"
+	assign set="assign"
 	{
 	arg ? set="keys"
 	, ? back="1"

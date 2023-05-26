@@ -4,9 +4,9 @@ const ABOMINATION: int = 1 + -50 * danda.getName[5+6]<sedm>(NameTypes.FIRST) as 
 const CIRNO: string = "fumo"
 const BOOL: bool = true
 const ARRAY: [int; 3] = [1, 2, 3]
-const ARRAY_BUILDER: [int; 3] = [5; 5]
+const ARRAY_BUILDER: [int; 3] = [5; 15]
 const DYNAMIC_ARRAY: &[int; _] = new [1, 2, 3]
-const DYNAMIC_ARRAY_BUILDER: &[int; _] = new [5; 5]
+const DYNAMIC_ARRAY_BUILDER: &[int; _] = new [5; 15]
 // test for generics
 const GENERIC_TYPE: Something<int> = Something(1)
 // test for generics with traits

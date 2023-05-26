@@ -182,11 +182,13 @@ pub mod dictionary {
                         identifier,
                         location: 0,
                         public: public(&node),
+                        value: expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors)
                     })
                 } else {
                     errors.push(ErrType::ConflictingNames(identifier.to_string()))
                 }
-                println!("{:?}", expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors))
+                expression_parser::traverse_da_fokin_value(&expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors), 0);
+                //println!("{:#?}", expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors));
             }
             "KWImpl" => {
                 let ident = get_nested_ident(&step_inside_val(&node, "identifier"), errors);
@@ -629,6 +631,7 @@ pub mod dictionary {
         /// location on stack
         pub location: usize,
         pub public: bool,
+        pub value: expression_parser::ValueType,
     }
     /// identifiers can not contain these characters: + - * / = % ; : , . ({<[]>}) & | ! ? " '
     /// map: let i: Int = 32; i = i + 63;

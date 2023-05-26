@@ -1,5 +1,5 @@
 use core::panic;
-use std::fmt::format;
+use std::fmt::{format, self};
 
 use crate::intermediate::dictionary::*;
 use crate::intermediate::AnalyzationError::ErrType;
@@ -8,6 +8,42 @@ use crate::tree_walker::tree_walker::Node;
 use crate::{intermediate, lexer};
 use intermediate::dictionary::*;
 use intermediate::*;
+
+
+// recursive function that traverses the tree and prints it
+pub fn traverse_da_fokin_value(val: &ValueType, depth: usize) {
+    match val {
+        ValueType::Value(val) => {
+            println!("{}Value {:?}", "-".repeat(depth), val.root);
+        }
+        ValueType::Literal(val) => {
+            println!("{}Literal {:?}", "-".repeat(depth), val.value);
+        }
+        ValueType::Parenthesis(val, _) => {
+            println!("{}Parenthesis", "-".repeat(depth));
+            traverse_da_fokin_value(val, depth + 1);
+        }
+        ValueType::Expression(val) => {
+            println!("{}Expression {:?}", "-".repeat(depth), val.operator.as_ref().unwrap());
+            if let Some(val) = &val.left {
+                traverse_da_fokin_value(val, depth + 1);
+            }
+            if let Some(val) = &val.right {
+                traverse_da_fokin_value(val, depth + 1);
+            }
+        }
+        ValueType::Operator(val) => {
+            println!("{}Operator", "-".repeat(depth));
+        }
+        ValueType::AnonymousFunction(val) => {
+            println!("{}AnonymousFunction", "-".repeat(depth));
+        }
+        ValueType::Blank => {
+            println!("{}Blank", "-".repeat(depth));
+        }
+        
+    }
+}
 
 pub fn expr_into_tree(node: &Node, errors: &mut Vec<ErrType>) -> ValueType {
     let nodes = step_inside_arr(&node, "nodes");
@@ -31,19 +67,19 @@ pub fn expr_into_tree(node: &Node, errors: &mut Vec<ErrType>) -> ValueType {
 
 /// %/*-+<>==!=<=>=&&||
 const ORDER_OF_OPERATIONS: [Operators; 13] = [
-    Operators::Mod,
-    Operators::Slash,
-    Operators::Star,
-    Operators::Plus,
-    Operators::Minus,
-    Operators::AngleBracket(false),
-    Operators::AngleBracket(true),
-    Operators::Equal,
-    Operators::NotEqual,
-    Operators::LessEq,
-    Operators::MoreEq,
-    Operators::And,
     Operators::Or,
+    Operators::And,
+    Operators::MoreEq,
+    Operators::LessEq,
+    Operators::NotEqual,
+    Operators::Equal,
+    Operators::AngleBracket(true),
+    Operators::AngleBracket(false),
+    Operators::Minus,
+    Operators::Plus,
+    Operators::Star,
+    Operators::Slash,
+    Operators::Mod,
 ];
 
 /// recursive function that transforms list of values into tree
@@ -184,6 +220,45 @@ pub fn try_get_literal(
             modificatior: prepend.1.clone(),
             value: Literals::String(str.clone()),
         });
+    }
+    if let Tokens::Text(txt) = &this.name {
+        if txt == "array_expr" {
+            let array = step_inside_val(&this, "array");
+            let name = if let Tokens::Text(txt) = &array.name {
+                txt.as_str()
+            } else {
+                unreachable!("array_expr has to have array as a child, please report this bug")
+            };
+            match name {
+                "array_builder" => {
+                    let value = expr_into_tree(&step_inside_val(&array, "value"), errors);
+                    let size = expr_into_tree(&step_inside_val(&array, "size"), errors);
+                    return Some(Literal {
+                        unary: prepend.2,
+                        refs: prepend.0,
+                        modificatior: prepend.1.clone(),
+                        value: Literals::Array(ArrayRule::Fill {
+                            value: Box::new(value),
+                            size: Box::new(size),
+                        })
+                    });
+                }
+                "array_literal" => {
+                    let values = step_inside_arr(&array, "values");
+                    let mut result = vec![];
+                    for value in values {
+                        result.push(expr_into_tree(&value, errors));
+                    }
+                    return Some(Literal {
+                        unary: prepend.2,
+                        refs: prepend.0,
+                        modificatior: prepend.1.clone(),
+                        value: Literals::Array(ArrayRule::Explicit(result))
+                    });
+                }
+                _ => unreachable!("array_expr has to be either array_builder or array_literal, please report this bug")
+            }
+        }
     }
     None
 }
@@ -351,10 +426,20 @@ pub enum Literals {
     Array(ArrayRule),
     String(String),
 }
-#[derive(Debug)]
 pub enum ArrayRule {
-    Fill(Box<ExprNode>, usize),
-    Explicit(Vec<ExprNode>),
+    Fill{value: Box<ValueType>, size: Box<ValueType>},
+    Explicit(Vec<ValueType>),
+}
+
+impl fmt::Debug for ArrayRule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ArrayRule::Fill{value, size} => write!(f, "[_; _]"),
+            ArrayRule::Explicit(vec) => {
+                write!(f, "[{}]", vec.len())
+            }
+        }
+    }
 }
 #[derive(Debug)]
 pub struct Variable {

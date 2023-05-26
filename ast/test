@@ -1,3 +1,4 @@
+
 type File = usize
 
 impl File {
@@ -5,6 +6,10 @@ impl File {
     fun write(&self=reg.ptr, data=reg.G1:string)! > 9
     fun append(&self=reg.ptr, data=reg.G1:string)! > 10
     fun close(&self=reg.ptr)! > 7
+}
+
+trait Brrr > 0 {
+    fun brrr(&self=reg.ptr): string > 8
 }
 
 fun print(msg=reg.ptr: string) > 0
