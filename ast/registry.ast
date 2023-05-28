@@ -4,6 +4,7 @@ entry [nodes
 	KWType ? set="nodes" back="2"
 	KWImpl ? set="nodes" back="3"
 	KWTrait ? set="nodes" back="4"
+	KWEnum ? set="nodes" back="5"
 	"'eof";
 
 generic_expr [types
@@ -30,7 +31,7 @@ generic_ident identifier [traits
 usually for function arguments declaration 
 fun danda(txt: String){}
 "
-type_specifier type mem generic
+type_specifier type
 	: harderr="true"
 	type set="type";
 
@@ -80,16 +81,18 @@ num_none num
 "
 type danda = int;
 "
-KWType identifier type mem
+KWType identifier type assign
 	"type" harderr="true"
 	ident set="identifier"
 	=
 	type set="type"
+	assign set="assign"
 	;?;
 
 KWEnum identifier [values assign
 	"enum" harderr="true"
 	ident set="identifier"
+	assign set="assign"
 	{
 	enum_value ? set="values"
 	, ? back="1"
@@ -115,9 +118,14 @@ KWStruct identifier [keys generic assign
 	generic_decl ? set="generic"
 	assign set="assign"
 	{
-	arg ? set="keys"
+	struct_arg ? set="keys"
 	, ? back="1"
 	};
+
+struct_arg identifier type
+	ident set="identifier" harderr="true"
+	:
+	type set="type";
 
 
 "
