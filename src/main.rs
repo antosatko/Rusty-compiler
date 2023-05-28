@@ -15,7 +15,7 @@ mod tree_walker;
 mod intermediate;
 mod type_check;
 mod expression_parser;
-mod dll_loader;
+mod libloader;
 
 fn main() {
     let mut args = env::args();
@@ -146,7 +146,7 @@ fn main() {
             let mut file =
                 File::open(file).expect(&format!("File not found. ({})", path).to_owned());
             file.read_to_string(&mut string).expect("neco se pokazilo");
-            dll_loader::load( &mut string.into_bytes());
+            libloader::load( &mut string.into_bytes());
         }
         _ => {
             println!("Unknown command: {}", cmd);

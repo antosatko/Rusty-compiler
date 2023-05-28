@@ -197,7 +197,7 @@ pub fn try_get_value(node: &Node, errors: &mut Vec<ErrType>) -> Option<ValueType
 pub fn try_get_literal(
     node: &Node,
     errors: &mut Vec<ErrType>,
-    prepend: &(usize, Option<String>, Option<Operators>),
+    prepend: &(Ref, Option<String>, Option<Operators>),
 ) -> Option<Literal> {
     if let Tokens::Text(txt) = &node.name {
         if txt != "literal" {
@@ -208,7 +208,7 @@ pub fn try_get_literal(
     if let Tokens::Number(_, _, _) = &this.name {
         return Some(Literal {
             unary: prepend.2,
-            refs: prepend.0,
+            refs: prepend.0.clone(),
             modificatior: prepend.1.clone(),
             value: Literals::Number(this.name.clone()),
         });
@@ -216,7 +216,7 @@ pub fn try_get_literal(
     if let Tokens::String(str) = &this.name {
         return Some(Literal {
             unary: prepend.2,
-            refs: prepend.0,
+            refs: prepend.0.clone(),
             modificatior: prepend.1.clone(),
             value: Literals::String(str.clone()),
         });
@@ -235,7 +235,7 @@ pub fn try_get_literal(
                     let size = expr_into_tree(&step_inside_val(&array, "size"), errors);
                     return Some(Literal {
                         unary: prepend.2,
-                        refs: prepend.0,
+                        refs: prepend.0.clone(),
                         modificatior: prepend.1.clone(),
                         value: Literals::Array(ArrayRule::Fill {
                             value: Box::new(value),
@@ -251,7 +251,7 @@ pub fn try_get_literal(
                     }
                     return Some(Literal {
                         unary: prepend.2,
-                        refs: prepend.0,
+                        refs: prepend.0.clone(),
                         modificatior: prepend.1.clone(),
                         value: Literals::Array(ArrayRule::Explicit(result))
                     });
@@ -331,8 +331,9 @@ pub fn get_tail(node: &Node, errors: &mut Vec<ErrType>) -> Vec<TailNodes> {
 pub fn get_prepend(
     node: &Node,
     errors: &mut Vec<ErrType>,
-) -> (usize, Option<String>, Option<Operators>) {
-    let refs = count_refs(&node);
+) -> (Ref, Option<String>, Option<Operators>) {
+    // TODO: use "ref_tok" instead of "ref_type"
+    let refs = get_ref_type(&node);
     let modificator = if let Tokens::Text(txt) = &step_inside_val(&node, "keywords").name {
         if txt == "'none" {
             None
@@ -352,6 +353,36 @@ pub fn get_prepend(
         None
     };
     (refs, modificator, unary)
+}
+
+pub fn get_ref_type(node: &Node) -> Ref {
+    let mut ampersants = 0;
+    let mut stars = 0;
+    let node = step_inside_val(&node, "ref");
+    for tok in step_inside_arr(&node, "tokens") {
+        match tok.name {
+            Tokens::Operator(Operators::Ampersant) => ampersants += 1,
+            Tokens::Operator(Operators::Star) => stars += 1,
+            Tokens::Operator(Operators::And) => ampersants += 2,
+            _ => {}
+        }
+    }
+    if ampersants == stars {
+        return Ref::None;
+    }
+    // find out if it's a reference or a dereference, if both, then subtract lesser from greater
+    let result = if ampersants > stars {
+        return Ref::Reference(ampersants - stars);
+    } else {
+        return Ref::Dereferencing(stars - ampersants);
+    };
+}
+
+#[derive(Debug, Clone)]
+pub enum Ref {
+    Dereferencing(usize),
+    Reference(usize),
+    None,
 }
 
 pub fn try_get_op(node: &Node, errors: &mut Vec<ErrType>) -> Option<Operators> {
@@ -415,7 +446,7 @@ impl ValueType {
 #[derive(Debug)]
 pub struct Literal {
     unary: Option<Operators>,
-    refs: usize,
+    refs: Ref,
     /// atm only keyword new, so bool would be sufficient, but who knows what will be in the future updates
     modificatior: Option<String>,
     value: Literals,
@@ -444,12 +475,12 @@ impl fmt::Debug for ArrayRule {
 #[derive(Debug)]
 pub struct Variable {
     unary: Option<Operators>,
-    refs: usize,
+    refs: Ref,
     /// atm only keyword new, so bool would be sufficient, but who knows what will be in the future updates
     modificatior: Option<String>,
     /// for longer variables
-    /// example: danda[5].touch_grass(9)
-    ///          ~~~~~ <- this is considered a root
+    /// example: *danda[5].touch_grass(9)
+    ///           ~~~~~ <- this is considered root
     root: String,
     /// for longer variables
     /// example: danda[5].touch_grass(9)

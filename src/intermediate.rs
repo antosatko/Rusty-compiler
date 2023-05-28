@@ -659,12 +659,12 @@ pub mod dictionary {
 
     #[derive(Debug)]
     pub struct ShallowType {
-        is_fun: Option<Box<Function>>,
+        pub is_fun: Option<Box<Function>>,
         /// if Some then it is an array of that length
-        arr_len: Option<usize>,
-        refs: usize,
-        main: NestedIdent,
-        generics: GenericExpr,
+        pub arr_len: Option<usize>,
+        pub refs: usize,
+        pub main: NestedIdent,
+        pub generics: GenericExpr,
     }
     impl ShallowType {
         pub fn empty() -> Self {
@@ -796,6 +796,8 @@ pub mod AnalyzationError {
         /// field line col | occurs when you try to assign same identifier to two or more struct fields
         StructVariantAssignedIdent(String, (usize, usize)),
         /// transform_error | occurs when there is an error in expression
-        TreeTransformError(expression_parser::TreeTransformError)
+        TreeTransformError(expression_parser::TreeTransformError),
+        /// invalid_register | occurs when you try to use register that does not exist
+        InvalidRegister(String),
     }
 }
