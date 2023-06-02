@@ -5,6 +5,7 @@ entry [nodes
 	KWImpl ? set="nodes" back="3"
 	KWTrait ? set="nodes" back="4"
 	KWEnum ? set="nodes" back="5"
+	KWConst ? set="nodes" back="6"
 	"'eof";
 
 generic_expr [types
@@ -202,6 +203,20 @@ KWOverload op arg type errorable assign generic
 	! ? set="errorable"
 	type_specifier ? set="type"
 	assign set="assign";
+
+
+KWConst identifier value
+	"const" harderr="true"
+	ident set="identifier"
+	=
+	value set="value"
+	;?;
+
+value value
+	"'number" ? set="value" end="true"
+	"'string" ? set="value" end="true"
+	"'text" ? set="value" end="true"
+	"'any" err="I am sorry but due to my laziness I have not implemented this properly yet";
 
 
 self_arg args ref mem

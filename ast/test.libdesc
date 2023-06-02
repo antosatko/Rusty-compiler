@@ -1,6 +1,10 @@
-type File = usize > 0
+struct File > 0 {
+    handle: usize
+}
 
-/*enum HttpResponses > 0 {
+const CIRNO = 9
+
+enum HttpResponses > 0 {
     Continue = 100,
     SwitchingProtocols,
     Processing,
@@ -62,7 +66,7 @@ type File = usize > 0
     LoopDetected,
     NotExtended = 510,
     NetworkAuthenticationRequired,
-}*/
+}
 
 impl File {
     fun read(&self=reg.ptr): string > 8

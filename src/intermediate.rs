@@ -799,5 +799,7 @@ pub mod AnalyzationError {
         TreeTransformError(expression_parser::TreeTransformError),
         /// invalid_register | occurs when you try to use register that does not exist
         InvalidRegister(String),
+        /// invalid_constant | occurs when you try to use constant that is not supported in rust libraries
+        InvalidConstant(crate::lexer::tokenizer::Tokens),
     }
 }

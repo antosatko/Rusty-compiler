@@ -52,6 +52,7 @@ pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
                         generics,
                         fields,
                         assign,
+                        methods: Vec::new(),
                     });
                 }
                 "KWType" => {
@@ -117,8 +118,50 @@ pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
                     }
                     dictionary.functions.push(fun);
                 }
+                "KWImpl" => {
+                    // find struct and append methods
+                    let ident = get_ident(&node);
+                    for struct_ in &mut dictionary.structs {
+                        if struct_.name == ident {
+                            for method in step_inside_arr(node, "methods") {
+                                let fun = get_fun_siginifier(&method, &mut errors);
+                                // check if already exists
+                                for fun_ in &struct_.methods {
+                                    if fun_.name == fun.name {
+                                        errors.push(ErrType::ConflictingNames(fun.name.to_string()))
+                                    }
+                                }
+                                struct_.methods.push(fun);
+                            }
+                        }
+                    }
+                }
                 "KWConst" => {
-                    println!("current version does not support constants");
+                    let ident = get_ident(&node);
+                    let val = &step_inside_val(&node, "value");
+                    let value = match &step_inside_val(val, "value").name {
+                        Tokens::Number(n1, n2, c) => ConstValue::Number(*n1, *n2, *c),
+                        Tokens::String(text) => ConstValue::Text(text.to_string()),
+                        Tokens::Text(bool) => match bool.as_str() {
+                            "true" => ConstValue::Bool(true),
+                            "false" => ConstValue::Bool(false),
+                            _ => {
+                                errors.push(ErrType::InvalidConstant(Tokens::Text(bool.to_string())));
+                                ConstValue::Bool(false)
+                            }
+                        },
+                        _ => panic!("hruzostrasna pohroma"),
+                    };
+                    // check if already exists
+                    for const_ in &dictionary.consts {
+                        if const_.name == ident {
+                            errors.push(ErrType::ConflictingNames(ident.to_string()))
+                        }
+                    }
+                    dictionary.consts.push(Const {
+                        name: ident,
+                        value,
+                    });
                 }
                 _ => {}
             }   
@@ -168,28 +211,6 @@ fn get_fun_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Function {
     }else {
         false
     };
-    /*for arg in step_inside_arr(node, "arguments") {
-        if let Tokens::Text(txt) = &arg.name {
-            if txt == "self_arg" {
-                args.push((
-                    String::from("self"),
-                    ShallowType {
-                        is_fun: None,
-                        arr_len: None,
-                        refs: count_refs(&arg),
-                        main: vec![String::from("Self")],
-                        generics: Vec::new(),
-                    },
-                    get_mem_loc(&arg),
-                ));
-                continue;
-            }
-        }
-        let ident = get_ident(&arg);
-        let type_ = get_type(step_inside_val(&arg, "type"), errors);
-        let mem_loc = get_mem_loc(&arg);
-        args.push((ident, type_, mem_loc));
-    }*/
     Function {
         name: get_ident(node),
         args,
@@ -203,14 +224,14 @@ fn get_mem_loc(node: &Node) -> MemoryTypes {
     let mem = if let Tokens::Text(txt) = &step_inside_val(&node, "mem").name {
         txt.to_string()
     } else {
-        panic!("you somehow managed to break the compiler, gj");
+        unreachable!("you somehow managed to break the compiler, gj");
     };
     let loc = if let Tokens::Text(txt) = &step_inside_val(&node, "loc").name {
         txt.to_string()
     } else {
-        panic!("you somehow managed to break the compiler, gj");
+        unreachable!("you somehow managed to break the compiler, gj");
     };
-    match mem.as_str() {
+    match mem.to_lowercase().as_str() {
         "stack" => MemoryTypes::Stack(loc.parse::<usize>().unwrap()),
         "register" => {
             if let Some(reg) = Registers::from_str(&loc, &mut Vec::new()) {
@@ -219,7 +240,7 @@ fn get_mem_loc(node: &Node) -> MemoryTypes {
                 MemoryTypes::Register(Registers::G1)
             }
         },
-        _ => panic!("you somehow managed to break the compiler, gj"),
+        _ => unreachable!("you somehow managed to break the compiler, gj"),
     }
 }
 
@@ -244,7 +265,7 @@ pub enum Registers {
 
 impl Registers {
     fn from_str(s: &str, errors: &mut Vec<ErrType>) -> Option<Self> {
-        match s {
+        match s.to_lowercase().as_str() {
             "g1" => Some(Registers::G1),
             "g2" => Some(Registers::G2),
             "g3" => Some(Registers::G3),
@@ -299,7 +320,8 @@ pub struct Struct {
     pub name: String,
     pub fields: Vec<(String, ShallowType)>,
     pub assign: usize,
-    generics: Vec<GenericDecl>,
+    pub generics: Vec<GenericDecl>,
+    pub methods: Vec<Function>,
 }
 
 #[derive(Debug)]
@@ -319,9 +341,14 @@ pub struct Type {
 #[derive(Debug)]
 pub struct Const {
     pub name: String,
-    pub kind: ShallowType,
-    pub value: ValueType,
-    pub location: usize,
+    pub value: ConstValue,
+}
+
+#[derive(Debug)]
+pub enum ConstValue {
+    Number(usize, f64, char),
+    Text(String),
+    Bool(bool),
 }
 
 #[derive(Debug)]
