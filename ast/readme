@@ -1,7 +1,7 @@
 AST stands for abstract syntax tree
 ===================================
 
-It is Rusty danda compiler specific structure, you wont find it anywhere else.
+It is Ruda compiler specific structure, you wont find it anywhere else.
 
 This file can be considered its documentation.
 
