@@ -1,4 +1,4 @@
-# Rusty Danda compiler
+# Ruda compiler
 <a><img src="logo.png" align="middle" height="256" width="256" ></a>
 
 ## Table of Contents
@@ -10,7 +10,7 @@
 
 ## About <a name = "about"></a>
 
-Compiler for Rusty Danda programming language. This repository contains everything related to Rusty danda language processing. For bytecode interpreter look at [VM](https://github.com/it-2001/rusty-vm). Standard library will get proper documentation later. Language documentation can be found here [docs](https://it-2001.github.io/Ruda-docs)
+Compiler for Ruda programming language. This repository contains everything related to Rusty danda language processing. For bytecode interpreter look at https://github.com/it-2001/rusty-vm. Standard library will get proper documentation later.
 
 ## Getting Started <a name = "getting_started"></a>
 
