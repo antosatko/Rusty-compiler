@@ -12,10 +12,10 @@ extern crate runtime;
 mod lexing_preprocessor;
 mod tree_walker;
 //mod writer;
-mod intermediate;
-mod type_check;
 mod expression_parser;
+mod intermediate;
 mod libloader;
+mod type_check;
 
 fn main() {
     let mut args = env::args();
@@ -41,7 +41,7 @@ fn main() {
             file.read_to_string(&mut string).expect("neco se pokazilo");
             let string = string.into_bytes();
             use lexer::tokenizer::*;
-            let ast = if let Some(ast) = generate_ast("ast/rd.ast") {
+            let ast = if let Some(ast) = generate_ast("ast/ruda.ast") {
                 ast
             } else {
                 panic!();
@@ -49,9 +49,11 @@ fn main() {
             println!("AST loaded.");
             let time = SystemTime::now();
             let mut tokens = tokenize(&string, false);
-            tokens.0 = if let Ok(toks) =
-                lexing_preprocessor::lexing_preprocessor::refactor(tokens.0, tokens.1, &mut tokens.2)
-            {
+            tokens.0 = if let Ok(toks) = lexing_preprocessor::lexing_preprocessor::refactor(
+                tokens.0,
+                tokens.1,
+                &mut tokens.2,
+            ) {
                 tokens.1 = toks.1;
                 toks.0
             } else {
@@ -76,7 +78,7 @@ fn main() {
                 }
                 None => {
                     println!("Aborting.");
-                    return
+                    return;
                 }
             }
             println!("Parsed.");
@@ -146,7 +148,48 @@ fn main() {
             let mut file =
                 File::open(file).expect(&format!("File not found. ({})", path).to_owned());
             file.read_to_string(&mut string).expect("neco se pokazilo");
-            libloader::load( &mut string.into_bytes());
+            libloader::load(&mut string.into_bytes());
+        }
+        "test" => {
+            use std::path::Path;
+            use std::ffi::OsStr;
+            use std::env;
+
+            let path = Path::new("./ahoj.txt");
+            println!("Absolute path: {:?}", env::current_dir().unwrap().join(path));
+
+            println!("Path: {:?}", path);
+            println!("Extension: {:?}", path.extension());
+            println!("File name: {:?}", path.file_name());
+            println!("Parent directory: {:?}", path.parent());
+            // if is file
+            if path.is_file() {
+                println!("File exists");
+                // if is txt file
+                if path.extension() == Some(OsStr::new("txt")) {
+                    println!("Extension is txt");
+                    // print content
+                    let str = String::from_utf8(std::fs::read(path).unwrap()).unwrap();
+                    println!("Content: {}", String::from_utf8(std::fs::read(path).unwrap()).unwrap());
+                }
+            }else {
+                println!("File does not exist");
+            }
+        }
+        "help" => {
+            let msg = r#"This is a compiler for the language Rusty Danda.
+
+Usage: {} [command] [args]
+Commands:
+    build [file] - compiles file - not implemented yet
+    tokenize [file] - prints tokens of file
+    astTest [file] - tests if AST can be loaded properly, if not, you will get an error hopefully
+                     also if you get an infinite loop, it means that one or more of the AST nodes
+                     are not terminated properly (missing semicolon)
+    libload [file] - tests if library can be loaded properly, if not, you will get an error hopefully
+    help - shows this message
+            "#;
+            println!("{msg}");
         }
         _ => {
             println!("Unknown command: {}", cmd);

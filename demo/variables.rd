@@ -43,3 +43,9 @@ const FUNCTION_ARRAY: [fun(): int; 3] = [fun(): int {
 }]
 // 2d array
 const ARRAY_2D: [[int; 3]; 3] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+// error declaration
+error BadId(id: int, maxId: int) {
+    message: "Expected id between 0 and " + maxId + ", got " + id,
+    code: 1
+}

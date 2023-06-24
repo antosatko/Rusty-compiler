@@ -1,7 +1,7 @@
 pub mod dictionary {
     use crate::{
         lexer::tokenizer::{Tokens, Operators},
-        tree_walker::tree_walker::{self, ArgNodeType, Err, Node}, expression_parser,
+        tree_walker::tree_walker::{self, ArgNodeType, Err, Node}, expression_parser, libloader,
     };
     use core::panic;
     use std::{collections::HashMap, fs::DirEntry};
@@ -113,17 +113,69 @@ pub mod dictionary {
                 let path = if let Tokens::String(path) = get_token(node, "path") {
                     path
                 } else {
-                    panic!("nemozne")
+                    unreachable!("import path must be string literal")
                 };
                 let name = if let Some(txt) = try_get_ident(node) {
                     Some(txt)
                 } else {
                     None
                 };
-                match name {
+                fn get_paths(path: &str, errors: &mut Vec<ErrType>) -> Vec<Imports> {
+                    use std::path::Path;
+                    use std::ffi::OsStr;
+                    let path = Path::new(&path);
+                    let mut files = Vec::new();
+                    // report error if path does not exist
+                    if !path.exists() {
+                        errors.push(ErrType::ImportPathDoesNotExist(path.to_str().unwrap().to_string()));
+                        return files;
+                    }
+                    if path.is_dir() {
+                        for entry in path.read_dir().expect("read_dir call failed") {
+                            let entry = entry.expect("failed to get entry");
+                            let path = entry.path();
+                            if path.is_file() {
+                                if let Some(ext) = path.extension() {
+                                    if ext == OsStr::new("dll") || ext == OsStr::new("rddll") {
+                                        files.push(Imports::Dll(path.to_str().unwrap().to_string(), None));
+                                    } else if ext == OsStr::new("rd") {
+                                        files.push(Imports::Rd(path.to_str().unwrap().to_string(), None));
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        if let Some(ext) = path.extension() {
+                            if ext == OsStr::new("dll") {
+                                files.push(Imports::Dll(path.to_str().unwrap().to_string(), None));
+                            } else if ext == OsStr::new("rd") {
+                                files.push(Imports::Rd(path.to_str().unwrap().to_string(), None));
+                            }
+                        }
+                    }
+                    files
+                }
+
+                /*match name {
                     Some(name) => {
                         if dictionary.register_id(name.to_string(), IdentifierKinds::Namespace) {
                             // TODO: read file and compile it into dictionary
+                            let paths = get_paths(&path, errors);
+                            for file in paths {
+                                match file {
+                                    Imports::Dll(path) => {
+                                        let mut dll = Dll::new(path);
+                                        dll.load();
+                                        dictionary.dlls.push(dll);
+                                    }
+                                    Imports::Rd(path) => {
+                                        let mut rd = Rd::new(path);
+                                        rd.load();
+                                        dictionary.rds.push(rd);
+                                    }
+                                }
+                            }
+
                         } else {
                             errors.push(ErrType::ConflictingNames(name.to_string()))
                         }
@@ -131,7 +183,7 @@ pub mod dictionary {
                     None => {
                         // TODO: read file and compile it into dictionary
                     }
-                }
+                }*/
             }
             "KWFun" => {
                 let fun = get_fun_siginifier(&node, errors);
@@ -499,6 +551,12 @@ pub mod dictionary {
             None => None,
         }
     }
+    #[derive(Debug)]
+    pub enum Imports {
+        Dll(String, Option<libloader::Dictionary>),
+        Rd(String, Option<Dictionary>),
+        RDll(String, Option<Dictionary>),
+    }
     /// all of the defined types/variables (enum, struct, function) in the current scope will be registered here
     #[derive(Debug)]
     pub struct Dictionary {
@@ -509,9 +567,15 @@ pub mod dictionary {
         pub variables: Vec<Variable>,
         pub constants: Vec<Constant>,
         pub identifiers: Vec<(String, IdentifierKinds)>,
-        pub imports: Vec<Dictionary>,
+        pub imports: Vec<Import>,
         pub implementations: Vec<Implementation>,
         pub traits: Vec<Trait>,
+    }
+    #[derive(Debug)]
+    pub struct Import {
+        pub path: String,
+        pub alias: Option<String>,
+        pub code: Option<Imports>,
     }
     #[derive(Debug)]
     pub struct Trait {
@@ -801,5 +865,7 @@ pub mod AnalyzationError {
         InvalidRegister(String),
         /// invalid_constant | occurs when you try to use constant that is not supported in rust libraries
         InvalidConstant(crate::lexer::tokenizer::Tokens),
+        /// import_path | occurs when you try to import file that does not exist
+        ImportPathDoesNotExist(String),
     }
 }

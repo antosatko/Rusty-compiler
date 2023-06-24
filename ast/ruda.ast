@@ -14,8 +14,51 @@ entry [nodes
 	KWImpl ? set="nodes" back="5"
 	KWTrait ? set="nodes" back="6"
 	KWEnum ? set="nodes" back="7"
+	KWError ? set="nodes" back="8"
 	"'eof";
 
+"
+// pretend that double quotes are single quotes
+// it will break otherwise
+error Ree(msg: string) {
+	message: ""Ree: "" + msg,
+	code: 1
+}
+error BadID(id: int, maxId: int) {
+	message: ""Expected id between 0 and "" + maxId + "", got "" + id,
+	code: 1
+}
+error BadID(id: int, maxId: int) {
+	message: {
+		io.print(""I will print this to stdout for debbuging"")
+		return ""Expected id between 0 and "" + maxId + "", got "" + id
+	},
+	code: 1
+}
+"
+
+KWError identifier [args [fields
+	"error" harderr="true"
+	ident set="identifier"
+	( ?
+		arg ? set="args"
+		, ? back="1"
+		)
+	{ ?
+		err_field ? set="fields"
+		, ? back="1"
+		};
+
+
+err_field identifier value
+	ident set="identifier"
+	:
+	err_value set="value";
+
+err_value expression
+	expression set="expression" end="false"
+	code_block set="expression" end="false"
+	"'any" err="";
 
 "
 let danda: int = 50;

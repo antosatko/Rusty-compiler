@@ -10,7 +10,7 @@
 
 ## About <a name = "about"></a>
 
-Compiler for Rusty Danda programming language. This repository contains everything related to Rusty danda language processing. For bytecode interpreter look at https://github.com/it-2001/rusty-vm. Standard library will get proper documentation later.
+Compiler for Rusty Danda programming language. This repository contains everything related to Rusty danda language processing. For bytecode interpreter look at [VM](https://github.com/it-2001/rusty-vm). Standard library will get proper documentation later. Language documentation can be found here [docs](https://it-2001.github.io/Ruda-docs)
 
 ## Getting Started <a name = "getting_started"></a>
 
@@ -45,4 +45,4 @@ Main goal is to learn Rust, earn bragging rights and have some language to write
 - [x] have fun
 
 ## Syntax <a name = "syntax"></a>
-This is not really place to talk about syntax, but if you are interested, you can look at ``ast/rd.ast``, where you will find source code for ast and also have a look at demos (only test.rd is guaranteed to be up to date).
+This is not really place to talk about syntax, but if you are interested, you can look at ``ast/ruda.ast``, where you will find source code for ast and also have a look at demos (only test.rd is guaranteed to be up to date).

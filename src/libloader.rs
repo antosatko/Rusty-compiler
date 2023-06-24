@@ -164,7 +164,7 @@ pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
                     });
                 }
                 _ => {}
-            }   
+            }
         } else {
             return Err("".to_owned());
         }
@@ -176,9 +176,7 @@ pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
         return Err("".to_owned());
     }
     println!("\n\n{:#?}", dictionary);
-
-    
-    Err("".to_owned())
+    Ok(dictionary)
 }
 
 fn from_tree(node: &Node) -> Result<Dictionary, String> {
