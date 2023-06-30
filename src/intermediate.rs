@@ -1,7 +1,7 @@
 pub mod dictionary {
     use crate::{
         lexer::tokenizer::{Tokens, Operators},
-        tree_walker::tree_walker::{self, ArgNodeType, Err, Node}, expression_parser, libloader,
+        tree_walker::tree_walker::{self, ArgNodeType, Err, Node}, expression_parser::{self, get_args}, libloader, codeblock_parser,
     };
     use core::panic;
     use std::{collections::HashMap, fs::DirEntry};
@@ -301,6 +301,44 @@ pub mod dictionary {
                 }
             }
             "expression" => {}
+            "KWError" => {
+                let ident = get_ident(&node);
+                let mut args = Vec::new();
+                for arg in step_inside_arr(&node, "args") {
+                    let ident = get_ident(&arg);
+                    let kind = get_type(&step_inside_val(&arg, "type"), errors);
+                    args.push((ident, kind));
+                }
+                let mut fields = Vec::new();
+                for field in step_inside_arr(&node, "fields") {
+                    let ident = get_ident(&field);
+                    let val = step_inside_val(&step_inside_val(&field, "value"), "expression");
+                    if let Tokens::Text(txt) = &val.name {
+                        match txt.as_str() {
+                            "expression" => {
+                                let expr = expression_parser::expr_into_tree(&val, errors);
+                                expression_parser::traverse_da_fokin_value(&expr, 0);
+                                fields.push((ident, ErrorField::Expression(expr)));
+                            }
+                            "code_block" => {
+                                todo!();
+                                //fields.push((ident, ErrorField::CodeBlock(code_block_parser::parse_code_block(&val, errors))))
+                            }
+                            _ => unreachable!("invalid field value"),
+                        }
+                    }
+                }
+                if dictionary.register_id(ident.to_string(), IdentifierKinds::Error) {
+                    dictionary.errors.push(Error {
+                        identifier: ident,
+                        args,
+                        fields,
+                        src_loc: 0,
+                    })
+                } else {
+                    errors.push(ErrType::ConflictingNames(ident.to_string()))
+                }
+            }
             _ => {}
         }
     }
@@ -331,6 +369,14 @@ pub mod dictionary {
             None
         };
         let arg = step_inside_val(&node, "arg");
+        
+        // fujj
+        let code = if node.nodes.contains_key("code") {
+            codeblock_parser::generate_tree(step_inside_val(&node, "code"), errors)
+        }else {
+            vec![]
+        };
+
         Overload {
             operator,
             arg: (
@@ -343,6 +389,7 @@ pub mod dictionary {
             generics,
             src_loc: 0,
             public: public(&node),
+            code,
         }
     }
     pub fn get_fun_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Function {
@@ -402,6 +449,12 @@ pub mod dictionary {
         let mut dict = Dictionary::new();
         load_dictionary(step_inside_arr(step_inside_val(node, "code"), "nodes"), &mut dict, &mut vec![]);
          */
+
+        let code = if node.nodes.contains_key("code") {
+            codeblock_parser::generate_tree(step_inside_val(&node, "code"), errors)
+        }else {
+            vec![]
+        };
         Function {
             can_yeet,
             identifier,
@@ -412,6 +465,7 @@ pub mod dictionary {
             generics,
             src_loc: 0,
             public: false,
+            code
         }
     }
     pub fn public(node: &Node) -> bool {
@@ -570,6 +624,7 @@ pub mod dictionary {
         pub imports: Vec<Import>,
         pub implementations: Vec<Implementation>,
         pub traits: Vec<Trait>,
+        pub errors: Vec<Error>,
     }
     #[derive(Debug)]
     pub struct Import {
@@ -596,6 +651,7 @@ pub mod dictionary {
         Variable,
         Namespace,
         Trait,
+        Error,
     }
     #[derive(Debug)]
     pub struct TypeDef {
@@ -610,6 +666,18 @@ pub mod dictionary {
     pub struct GenericDecl {
         pub identifier: String,
         pub traits: Vec<NestedIdent>,
+    }
+    #[derive(Debug)]
+    pub struct Error {
+        pub identifier: String,
+        pub src_loc: usize,
+        pub fields: Vec<(String, ErrorField)>,
+        pub args: Vec<(String, ShallowType)>,
+    }
+    #[derive(Debug)]
+    pub enum ErrorField {
+        Expression(expression_parser::ValueType),
+        // todo: add codeblock
     }
     #[derive(Debug)]
     pub struct Function {
@@ -634,6 +702,7 @@ pub mod dictionary {
         /// location in source code
         pub src_loc: usize,
         pub public: bool,
+        pub code: Vec<codeblock_parser::Nodes>,
     }
     #[derive(Debug)]
     pub struct Overload {
@@ -649,6 +718,7 @@ pub mod dictionary {
         /// location in source code
         pub src_loc: usize,
         pub public: bool,
+        pub code: Vec<codeblock_parser::Nodes>,
     }
     #[derive(Debug)]
     pub struct Enum {
@@ -783,6 +853,7 @@ pub mod dictionary {
                 imports: vec![],
                 implementations: vec![],
                 traits: vec![],
+                errors: vec![],
             }
         }
         pub fn index_of(&self, identifier: String) -> Option<usize> {
@@ -867,5 +938,7 @@ pub mod AnalyzationError {
         InvalidConstant(crate::lexer::tokenizer::Tokens),
         /// import_path | occurs when you try to import file that does not exist
         ImportPathDoesNotExist(String),
+        /// not_code_block | occurs when you try to use code block that is not code block (probably wont happen tho)
+        NotCodeBlock,
     }
 }

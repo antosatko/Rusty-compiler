@@ -681,10 +681,19 @@ RESERVED
 	"break" ? end="false"
 	"as" ? end="false"
 	"new" ? end="false"
+	"sizeof" ? end="false"
+	"delete" ? end="false"
+	"return" ? end="false"
+	"else" ? end="false"
+	"for" ? end="false"
+	"switch" ? end="false"
+	"error" ? end="false"
 	"'any" err="v poradku";
 
 value_mod kw 
 	"new" ? set="kw" end="true"
+	"sizeof" ? set="kw" end="true"
+	"delete" ? set="kw" end="true"
 	"'any" err="neni kw";
 
 cast type

@@ -16,6 +16,7 @@ mod expression_parser;
 mod intermediate;
 mod libloader;
 mod type_check;
+mod codeblock_parser;
 
 fn main() {
     let mut args = env::args();
