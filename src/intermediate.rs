@@ -239,7 +239,7 @@ pub mod dictionary {
                 } else {
                     errors.push(ErrType::ConflictingNames(identifier.to_string()))
                 }
-                expression_parser::traverse_da_fokin_value(&expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors), 0);
+                //expression_parser::traverse_da_fokin_value(&expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors), 0);
                 //println!("{:#?}", expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors));
             }
             "KWImpl" => {
@@ -317,7 +317,7 @@ pub mod dictionary {
                         match txt.as_str() {
                             "expression" => {
                                 let expr = expression_parser::expr_into_tree(&val, errors);
-                                expression_parser::traverse_da_fokin_value(&expr, 0);
+                                //expression_parser::traverse_da_fokin_value(&expr, 0);
                                 fields.push((ident, ErrorField::Expression(expr)));
                             }
                             "code_block" => {
@@ -677,7 +677,7 @@ pub mod dictionary {
     #[derive(Debug)]
     pub enum ErrorField {
         Expression(expression_parser::ValueType),
-        // todo: add codeblock
+        CodeBlock(Vec<codeblock_parser::Nodes>)
     }
     #[derive(Debug)]
     pub struct Function {
@@ -940,5 +940,7 @@ pub mod AnalyzationError {
         ImportPathDoesNotExist(String),
         /// not_code_block | occurs when you try to use code block that is not code block (probably wont happen tho)
         NotCodeBlock,
+        /// not_operator | occurs when you try to use operator that is not operator (probably wont happen tho)
+        NotOperator,
     }
 }

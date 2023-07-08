@@ -175,7 +175,7 @@ pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
         }
         return Err("".to_owned());
     }
-    println!("\n\n{:#?}", dictionary);
+    //println!("\n\n{:#?}", dictionary);
     Ok(dictionary)
 }
 
@@ -190,7 +190,7 @@ fn get_assign(node: &Node) -> usize {
     if let Tokens::Number(num, _ , _) = step_inside_val(node, "num").name {
         return num;
     }
-    println!("node: {:?}", node);
+    //println!("node: {:?}", node);
     panic!("hruzostrasna pohroma");
 }
 fn get_fun_siginifier(node: &Node, errors: &mut Vec<ErrType>) -> Function {

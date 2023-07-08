@@ -31,15 +31,19 @@ trait Trait {
 }
 // functions assigned to constants
 const FUNCTION: fun(): int = fun(): int {
-    return 1
+    try { } catch e: Exception {
+        return 1
+    } finally {
+        return 2
+    }
 }
-// function array
+// function
 const FUNCTION_ARRAY: [fun(): int; 3] = [fun(): int {
-    return 1
+    return 7
 }, fun(): int {
-    return 2
+    return 8
 }, fun(): int {
-    return 3
+    return 9
 }]
 // 2d array
 const ARRAY_2D: [[int; 3]; 3] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]

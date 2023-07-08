@@ -5,8 +5,6 @@ pub const S_WIDTH: uint = 650
 const S_HEIGHT: uint = 400
 
 
-type danda<T(auto), A> = mem.HashMap<Danda.nevim<ahoj>, Danda2>
-
 pub trait TRT impl danda.dfg5 .fg, sger.fdg {
 
     fun constructor(direction: float){

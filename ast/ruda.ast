@@ -212,9 +212,9 @@ KWLoop code
 "
 for i in range(60) {}
 "
-KWFor idx expression code
+KWFor identifier expression code
 	"for" harderr="true"
-	ident set="idx"
+	ident set="identifier"
 	"in"
 	expression set="expression" 
 	code_block set="code";
@@ -267,10 +267,11 @@ try {
 	dangerous_function();
 }
 "
-KWTry code_block [catch
+KWTry code [catch finally
 	"try" harderr="true"
-	code_block set="code_block"
-	KWCatch ? set="catch" back="0";
+	code_block set="code"
+	KWCatch ? set="catch" back="0"
+	KWFinally ? set="finally";
 
 
 "
@@ -279,13 +280,17 @@ catch e: NotNumber {}
 catch e: WrongEncoding, Ooops {}
 catch e {}
 "
-KWCatch identifier [types code_block
+KWCatch identifier [types code
 	"catch" harderr="true"
 	ident ? set="identifier"
 		: ?
 			type_ident ? set="types"
 			, ? back="1"
-	code_block set="code_block";
+	code_block set="code";
+
+KWFinally code
+	"finally" harderr="true"
+	code_block set="code";
 
 
 "
@@ -520,13 +525,15 @@ set_op op
 	*= ? set="op" end="true"
 	"'any" err="not a setting operator";
 
-expression [nodes
+expression [nodes ignore
+	"_" ? set="ignore" end="true"
 	anonymous_function ? set="nodes" end="false"
 	value ? set="nodes"
 	operator ? set="nodes" back="1"
 	notempty ! nodes="nodes";
 
-expression_option [nodes
+expression_option [nodes ignore
+	"_" ? set="ignore" end="true"
 	anonymous_function ? set="nodes" end="false"
 	value ? set="nodes"
 	operator ? set="nodes" back="1";

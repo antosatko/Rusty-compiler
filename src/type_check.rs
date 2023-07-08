@@ -8,7 +8,7 @@ pub mod TypesCheck {
     pub fn index_types(dictionary: &mut Dictionary) {
         println!("Types check started.");
         for (key, value) in &dictionary.identifiers {
-            println!("{}: {:?}", key, value);
+            //println!("{}: {:?}", key, value);
         }
     }
 }

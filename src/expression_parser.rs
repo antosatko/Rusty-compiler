@@ -46,6 +46,7 @@ pub fn traverse_da_fokin_value(val: &ValueType, depth: usize) {
 }
 
 pub fn expr_into_tree(node: &Node, errors: &mut Vec<ErrType>) -> ValueType {
+    //println!("expr_into_tree: {:?}", node);
     let nodes = step_inside_arr(&node, "nodes");
     if nodes.len() == 0 {
         return ValueType::Expression(Box::new(ExprNode::blank()));
@@ -72,7 +73,7 @@ const ORDER_OF_OPERATIONS: [Operators; 13] = [
     Operators::MoreEq,
     Operators::LessEq,
     Operators::NotEqual,
-    Operators::Equal,
+    Operators::DoubleEq,
     Operators::AngleBracket(true),
     Operators::AngleBracket(false),
     Operators::Minus,
