@@ -1,7 +1,7 @@
 pub mod dictionary {
     use crate::{
         lexer::tokenizer::{Tokens, Operators},
-        tree_walker::tree_walker::{self, ArgNodeType, Err, Node}, expression_parser::{self, get_args}, libloader, codeblock_parser,
+        tree_walker::tree_walker::{self, ArgNodeType, Err, Node}, expression_parser::{self, get_args, ValueType}, libloader, codeblock_parser,
     };
     use core::panic;
     use std::{collections::HashMap, fs::DirEntry};
@@ -16,8 +16,21 @@ pub mod dictionary {
         }
         println!("global: {global_dict:?}");
         println!("errors: {errors:?}");
-        use crate::type_check::TypesCheck;
-        TypesCheck::index_types(&mut global_dict);
+        analyze_consts(&mut global_dict, &mut errors);
+    }
+    pub fn analyze_consts(dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
+        for constant in &mut dictionary.constants {
+            match &constant.value {
+                ValueType::Literal(val) => {
+                    if val.is_simple() {
+                        println!("{:?}", ConstValue::from_literal(&val));
+                    }
+                }
+                _ => {
+                    println!("i dont know chief")
+                }
+            }
+        }
     }
     pub fn load_dictionary(nodes: &Vec<Node>, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
         for node in nodes {
@@ -234,7 +247,8 @@ pub mod dictionary {
                         identifier,
                         location: 0,
                         public: public(&node),
-                        value: expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors)
+                        value: expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors),
+                        real_value: None,
                     })
                 } else {
                     errors.push(ErrType::ConflictingNames(identifier.to_string()))
@@ -766,6 +780,45 @@ pub mod dictionary {
         pub location: usize,
         pub public: bool,
         pub value: expression_parser::ValueType,
+        pub real_value: Option<ConstValue>,
+    }
+    #[derive(Debug)]
+    pub enum ConstValue {
+        Int(usize),
+        Float(f64),
+        Char(char),
+        Bool(bool),
+        Usize(usize),
+        Function(Function),
+        String(String),
+        Null,
+        Array(Vec<ConstValue>),
+    }
+    impl ConstValue {
+        pub fn from_literal(literal: &expression_parser::Literal) -> Option<ConstValue> {
+            if literal.is_simple() {
+                match &literal.value {
+                    expression_parser::Literals::Number(num) => {
+                        if let Tokens::Number(i, f, kind) = *num {
+                            match kind {
+                                'f' => Some(ConstValue::Float(f+i as f64)),
+                                'u' => Some(ConstValue::Usize(i as usize)),
+                                'i' => Some(ConstValue::Int(i)),
+                                _ => None,
+                            }
+                        }else {
+                            None
+                        }
+                    }
+                    expression_parser::Literals::Array(_) => todo!(),
+                    expression_parser::Literals::String(str) => {
+                        Some(ConstValue::String(str.clone()))
+                    }
+                }
+            } else {
+                None
+            }
+        }
     }
     /// identifiers can not contain these characters: + - * / = % ; : , . ({<[]>}) & | ! ? " '
     /// map: let i: Int = 32; i = i + 63;

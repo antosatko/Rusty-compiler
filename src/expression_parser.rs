@@ -379,7 +379,7 @@ pub fn get_ref_type(node: &Node) -> Ref {
     };
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ref {
     Dereferencing(usize),
     Reference(usize),
@@ -446,11 +446,16 @@ impl ValueType {
 }
 #[derive(Debug)]
 pub struct Literal {
-    unary: Option<Operators>,
-    refs: Ref,
+    pub unary: Option<Operators>,
+    pub refs: Ref,
     /// atm only keyword new, so bool would be sufficient, but who knows what will be in the future updates
-    modificatior: Option<String>,
-    value: Literals,
+    pub modificatior: Option<String>,
+    pub value: Literals,
+}
+impl Literal {
+    pub fn is_simple(&self) -> bool {
+        self.unary.is_none() && self.refs == Ref::None && self.modificatior.is_none()
+    }
 }
 #[derive(Debug)]
 pub enum Literals {
