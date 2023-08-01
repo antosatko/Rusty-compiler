@@ -1,9 +1,7 @@
 pub mod lexing_preprocessor {
     use std::time::SystemTime;
 
-    use crate::lexer::{
-        tokenizer::{deparse_token, Operators, Tokens},
-    };
+    use crate::lexer::tokenizer::{deparse_token, Operators, Tokens};
 
     use super::parse_err::Errors;
     pub fn refactor(
@@ -44,7 +42,7 @@ pub mod lexing_preprocessor {
                                 let mut float = String::from("0.");
                                 float.push_str(txt2);
                                 if let Ok(num2) = float.parse::<f64>() {
-                                    tokens[idx] = Tokens::Number(first_num, num2, 'f');
+                                    tokens[idx] = Tokens::Number(first_num as f64 + num2, 'f');
                                     remove(tokens, idx + 1);
                                     remove(tokens, idx + 2);
                                     return 2;
@@ -63,7 +61,7 @@ pub mod lexing_preprocessor {
                         } else {
                             if last.is_ascii_digit() {
                                 if let Ok(num) = txt.parse::<usize>() {
-                                    tokens[idx] = Tokens::Number(num, 0f64, 'i')
+                                    tokens[idx] = Tokens::Number(num as f64, 'n')
                                 } else {
                                     errors.push(Errors::InvalidNumber(lines[idx], txt.to_string()));
                                     // syntax err: incorrect number
@@ -71,7 +69,7 @@ pub mod lexing_preprocessor {
                             } else {
                                 if let Ok(num) = txt[..txt.len() - 1].parse::<usize>() {
                                     tokens[idx] =
-                                        Tokens::Number(num, 0f64, last)
+                                        Tokens::Number(num as f64, last)
                                 } else {
                                     errors.push(Errors::InvalidNumber(lines[idx], txt.to_string()));
                                     // syntax err: incorrect number
@@ -109,6 +107,37 @@ pub mod lexing_preprocessor {
                 }
                 remove_range(tokens, idx + 1, i + 1);
                 tokens[idx] = Tokens::String(res);
+            }
+            Tokens::Quotes => {
+                let mut i = idx + 1;
+                let mut res = String::from("\"");
+                while tokens[i] != Tokens::Quotes {
+                    res.push_str(&deparse_token(&tokens[i]));
+                    i += 1;
+                    if i == tokens.len() {
+                        // syntax err: end of string never found
+                        remove_range(tokens, idx + 1, tokens.len());
+                        tokens[idx] = Tokens::String(res);
+                        return 1;
+                    }
+                }
+                remove_range(tokens, idx + 1, i + 1);
+                res.push('"');
+                let temp = snailquote::unescape(&res);
+                match temp {
+                    Ok(temp) => {
+                        if temp.len() == 1 {
+                            tokens[idx] = Tokens::Char(temp.chars().next().unwrap());
+                        } else {
+                            errors.push(Errors::CharacterTooLong(lines[idx], temp));
+                        }
+                    }
+                    Err(err) => {
+                        // syntax err: invalid string
+                        errors.push(Errors::InvalidChar(lines[idx], err.to_string()));
+                        tokens[idx] = Tokens::String(res);
+                    }
+                }
             }
             Tokens::Space => {
                 remove(tokens, idx);
@@ -260,5 +289,9 @@ pub mod parse_err {
     pub enum Errors {
         // (line, column) number
         InvalidNumber((usize, usize), String),
+        // (line, column) character
+        InvalidChar((usize, usize), String),
+        // (line, column) character
+        CharacterTooLong((usize, usize), String),
     }
 }

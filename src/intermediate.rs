@@ -1,7 +1,10 @@
 pub mod dictionary {
     use crate::{
-        lexer::tokenizer::{Tokens, Operators},
-        tree_walker::tree_walker::{self, ArgNodeType, Err, Node}, expression_parser::{self, get_args, ValueType}, libloader, codeblock_parser,
+        codeblock_parser,
+        expression_parser::{self, get_args, ValueType},
+        lexer::tokenizer::{Operators, Tokens},
+        libloader,
+        tree_walker::tree_walker::{self, ArgNodeType, Err, Node},
     };
     use core::panic;
     use std::{collections::HashMap, fs::DirEntry};
@@ -14,25 +17,181 @@ pub mod dictionary {
         if let Some(ArgNodeType::Array(entry)) = ast.get("nodes") {
             load_dictionary(entry, &mut global_dict, &mut errors)
         }
-        println!("global: {global_dict:?}");
         println!("errors: {errors:?}");
         analyze_consts(&mut global_dict, &mut errors);
+        println!("errors: {errors:?}");
     }
     pub fn analyze_consts(dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
-        for constant in &mut dictionary.constants {
-            match &constant.value {
-                ValueType::Literal(val) => {
-                    if val.is_simple() {
-                        println!("{:?}", ConstValue::from_literal(&val));
+        let mut changes = Vec::new();
+        loop {
+            for i in 0..dictionary.constants.len() {
+                let constant = &dictionary.constants[i];
+                if constant.real_value.is_some() {
+                    continue;
+                }
+                if let Some(val) = analyze_const(&constant.value, dictionary, errors) {
+                    changes.push((i, val));
+                }
+            }
+            println!("iterating changes: {}", changes.len());
+            if changes.len() > 0 {
+                while let Some((i, val)) = changes.pop() {
+                    dictionary.constants[i].real_value = Some(val);
+                }
+            } else {
+                // look if every constant has a value
+                for constant in &dictionary.constants {
+                    if constant.real_value.is_none() {
+                    errors.push(ErrType::CannotInitializeConstant(
+                            constant.identifier.to_string(),
+                        ))
                     }
                 }
-                _ => {
-                    println!("i dont know chief")
+                break;
+            }
+        }
+        println!("final");
+        for i in 0..dictionary.constants.len() {
+            let constant = &dictionary.constants[i];
+            if let Some(val) = analyze_const(&constant.value, dictionary, errors) {
+                changes.push((i, val));
+            }
+        }
+        if changes.len() > 0 {
+            while let Some((i, val)) = changes.pop() {
+                println!("{} {:?}", i, val);
+                dictionary.constants[i].real_value = Some(val);
+            }
+        } else {
+            // look if every constant has a value
+            for constant in &dictionary.constants {
+                if constant.real_value.is_none() {
+                    println!("2: {} {:?}", constant.identifier, constant.value);
+                    errors.push(ErrType::CannotInitializeConstant(
+                        constant.identifier.to_string(),
+                    ))
                 }
             }
         }
     }
-    pub fn load_dictionary(nodes: &Vec<Node>, dictionary: &mut Dictionary, errors: &mut Vec<ErrType>) {
+    pub fn analyze_const(
+        constant: &ValueType,
+        dictionary: &Dictionary,
+        errors: &mut Vec<ErrType>,
+    ) -> Option<ConstValue> {
+        match constant {
+            ValueType::Literal(val) => {
+                if val.is_simple() {
+                    ConstValue::from_literal(&val, &dictionary, errors)
+                } else {
+                    None
+                }
+            }
+            ValueType::AnonymousFunction(fun) => Some(ConstValue::Function((*fun).clone())),
+            ValueType::Value(val) => {
+                let unary = if let Some(unary) = &val.unary {
+                    unary
+                } else {
+                    &Operators::DoubleEq
+                };
+                let val = if val.is_simple() {
+                    if val.tail.len() == 0 {
+                        match val.root.as_str() {
+                            "true" => Some(ConstValue::Bool(true)),
+                            "false" => Some(ConstValue::Bool(false)),
+                            _ => {
+                                let const_val = dictionary.find_const(&val.root);
+                                if let Some(const_val) = const_val {
+                                    if let Some(val) = &const_val.real_value {
+                                        Some((*val).clone())
+                                    } else {
+                                        None
+                                    }
+                                } else {
+                                    None
+                                }
+                            }
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                match val {
+                    Some(mut val) => {
+                        val.apply_unary(unary);
+                        Some(val)
+                    }
+                    None => None,
+                }
+            }
+            ValueType::Expression(expression) => {
+                let left = if let Some(left) = &expression.left {
+                    analyze_const(left, dictionary, errors)
+                } else {
+                    return None;
+                };
+                if left.is_none() {
+                    return None;
+                }
+                let left = left.unwrap();
+                let right = if let Some(right) = &expression.right {
+                    analyze_const(right, dictionary, errors)
+                } else {
+                    return None
+                };
+                if right.is_none() {
+                    return None
+                }
+                let right = right.unwrap();
+                let op = if let Some(op) = &expression.operator {
+                    op
+                } else {
+                    errors.push(ErrType::MissingOperator);
+                    return None;
+                };
+                match &op {
+                    Operators::Plus => match (&left, &right) {
+                        (ConstValue::String(l), ConstValue::String(r)) => {
+                            Some(ConstValue::String(l.clone() + r))
+                        }
+                        _ => {
+                            let l = left.into_number();
+                            let r = right.into_number();
+                            if let (Some(l), Some(r)) = (l, r) {
+                                match op {
+                                    Operators::Plus => Some(ConstValue::Number(l.0 + r.0)),
+                                    Operators::Minus => Some(ConstValue::Number(l.0 - r.0)),
+                                    Operators::Star => Some(ConstValue::Number(l.0 * r.0)),
+                                    Operators::Slash => Some(ConstValue::Number(l.0 / r.0)),
+                                    Operators::Mod => Some(ConstValue::Number(l.0 % r.0)),
+                                    _ => None,
+                                }
+                            } else {
+                                None
+                            }
+                        }
+                    },
+                    _ => None,
+                }
+            }
+            ValueType::Blank => Some(ConstValue::Undefined),
+            ValueType::Parenthesis(v, t) => {
+                if t.len() != 0 {
+                    None
+                } else {
+                    analyze_const(v, dictionary, errors)
+                }
+            }
+            _ => None,
+        }
+    }
+    pub fn load_dictionary(
+        nodes: &Vec<Node>,
+        dictionary: &mut Dictionary,
+        errors: &mut Vec<ErrType>,
+    ) {
         for node in nodes {
             load_node(node, dictionary, errors);
         }
@@ -53,8 +212,8 @@ pub mod dictionary {
                     overloads: vec![],
                 };
                 for enum_value in step_inside_arr(&node, "values") {
-                    let n = if let Tokens::Number(n, _, _) = get_token(&enum_value, "default") {
-                        *n
+                    let n = if let Tokens::Number(n, _) = get_token(&enum_value, "default") {
+                        *n as usize
                     } else {
                         let len = result.keys.len() - 1;
                         result.keys[len].1 + 1
@@ -134,13 +293,15 @@ pub mod dictionary {
                     None
                 };
                 fn get_paths(path: &str, errors: &mut Vec<ErrType>) -> Vec<Imports> {
-                    use std::path::Path;
                     use std::ffi::OsStr;
+                    use std::path::Path;
                     let path = Path::new(&path);
                     let mut files = Vec::new();
                     // report error if path does not exist
                     if !path.exists() {
-                        errors.push(ErrType::ImportPathDoesNotExist(path.to_str().unwrap().to_string()));
+                        errors.push(ErrType::ImportPathDoesNotExist(
+                            path.to_str().unwrap().to_string(),
+                        ));
                         return files;
                     }
                     if path.is_dir() {
@@ -150,9 +311,15 @@ pub mod dictionary {
                             if path.is_file() {
                                 if let Some(ext) = path.extension() {
                                     if ext == OsStr::new("dll") || ext == OsStr::new("rddll") {
-                                        files.push(Imports::Dll(path.to_str().unwrap().to_string(), None));
+                                        files.push(Imports::Dll(
+                                            path.to_str().unwrap().to_string(),
+                                            None,
+                                        ));
                                     } else if ext == OsStr::new("rd") {
-                                        files.push(Imports::Rd(path.to_str().unwrap().to_string(), None));
+                                        files.push(Imports::Rd(
+                                            path.to_str().unwrap().to_string(),
+                                            None,
+                                        ));
                                     }
                                 }
                             }
@@ -212,7 +379,6 @@ pub mod dictionary {
             }
             "KWLet" => {
                 let identifier = get_ident(&node);
-                let undefKind = true;
                 let kind = if let Tokens::Text(txt) = &step_inside_val(node, "type").name {
                     if txt == "type_specifier" {
                         Some(get_type(
@@ -247,7 +413,10 @@ pub mod dictionary {
                         identifier,
                         location: 0,
                         public: public(&node),
-                        value: expression_parser::expr_into_tree(step_inside_val(&node, "expression"), errors),
+                        value: expression_parser::expr_into_tree(
+                            step_inside_val(&node, "expression"),
+                            errors,
+                        ),
                         real_value: None,
                     })
                 } else {
@@ -383,11 +552,11 @@ pub mod dictionary {
             None
         };
         let arg = step_inside_val(&node, "arg");
-        
+
         // fujj
         let code = if node.nodes.contains_key("code") {
             codeblock_parser::generate_tree(step_inside_val(&node, "code"), errors)
-        }else {
+        } else {
             vec![]
         };
 
@@ -442,7 +611,7 @@ pub mod dictionary {
                             }
                         }
                         args.push((ident, get_type(step_inside_val(&arg, "type"), errors)));
-    }
+                    }
                     _ => {
                         unreachable!()
                     }
@@ -466,7 +635,7 @@ pub mod dictionary {
 
         let code = if node.nodes.contains_key("code") {
             codeblock_parser::generate_tree(step_inside_val(&node, "code"), errors)
-        }else {
+        } else {
             vec![]
         };
         Function {
@@ -479,7 +648,7 @@ pub mod dictionary {
             generics,
             src_loc: 0,
             public: false,
-            code
+            code,
         }
     }
     pub fn public(node: &Node) -> bool {
@@ -640,6 +809,16 @@ pub mod dictionary {
         pub traits: Vec<Trait>,
         pub errors: Vec<Error>,
     }
+    impl Dictionary {
+        pub fn find_const(&self, name: &str) -> Option<&Constant> {
+            for constant in &self.constants {
+                if constant.identifier == name {
+                    return Some(constant);
+                }
+            }
+            None
+        }
+    }
     #[derive(Debug)]
     pub struct Import {
         pub path: String,
@@ -676,7 +855,7 @@ pub mod dictionary {
         pub overloads: Vec<Overload>,
         pub methods: Vec<Function>,
     }
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct GenericDecl {
         pub identifier: String,
         pub traits: Vec<NestedIdent>,
@@ -691,9 +870,9 @@ pub mod dictionary {
     #[derive(Debug)]
     pub enum ErrorField {
         Expression(expression_parser::ValueType),
-        CodeBlock(Vec<codeblock_parser::Nodes>)
+        CodeBlock(Vec<codeblock_parser::Nodes>),
     }
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Function {
         /// function identifiers will be changed to allow for function overload
         /// name mangler rules: "{identifier}:{args.foreach("{typeof}:")}"
@@ -782,9 +961,10 @@ pub mod dictionary {
         pub value: expression_parser::ValueType,
         pub real_value: Option<ConstValue>,
     }
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub enum ConstValue {
-        Int(usize),
+        Number(f64),
+        Int(i64),
         Float(f64),
         Char(char),
         Bool(bool),
@@ -793,24 +973,63 @@ pub mod dictionary {
         String(String),
         Null,
         Array(Vec<ConstValue>),
+        Undefined,
     }
     impl ConstValue {
-        pub fn from_literal(literal: &expression_parser::Literal) -> Option<ConstValue> {
+        pub fn from_literal(
+            literal: &expression_parser::Literal,
+            dictionary: &Dictionary,
+            errors: &mut Vec<ErrType>,
+        ) -> Option<ConstValue> {
+            let negate = if let Some(Operators::Minus) = literal.unary {
+                -1.0
+            } else {
+                1.0
+            };
             if literal.is_simple() {
                 match &literal.value {
                     expression_parser::Literals::Number(num) => {
-                        if let Tokens::Number(i, f, kind) = *num {
+                        if let Tokens::Number(num, kind) = *num {
                             match kind {
-                                'f' => Some(ConstValue::Float(f+i as f64)),
-                                'u' => Some(ConstValue::Usize(i as usize)),
-                                'i' => Some(ConstValue::Int(i)),
+                                'f' => Some(ConstValue::Float(num as f64 * negate)),
+                                'u' => Some(ConstValue::Usize(num as usize)),
+                                'n' => Some(ConstValue::Number(num * negate)),
+                                'i' => Some(ConstValue::Int(num as i64 * negate as i64)),
+                                'c' => Some(ConstValue::Char(num as u8 as char)),
                                 _ => None,
                             }
-                        }else {
+                        } else {
                             None
                         }
                     }
-                    expression_parser::Literals::Array(_) => todo!(),
+                    expression_parser::Literals::Char(c) => Some(ConstValue::Char(*c)),
+                    expression_parser::Literals::Array(arr_rule) => match arr_rule {
+                        expression_parser::ArrayRule::Fill { value, size } => {
+                            let mut arr = Vec::new();
+                            let s = analyze_const(&size, dictionary, errors);
+                            let v = analyze_const(&value, dictionary, errors)
+                                .unwrap_or(ConstValue::Undefined);
+                            if let Some(n) = s {
+                                if let Some(n_data) = n.into_number() {
+                                    let (i, _) = n_data;
+                                    for _ in 0..i as usize {
+                                        arr.push(v.clone());
+                                    }
+                                }
+                                Some(ConstValue::Array(arr))
+                            } else {
+                                None
+                            }
+                        }
+                        expression_parser::ArrayRule::Explicit(values) => {
+                            let mut arr = Vec::new();
+                            for v in values {
+                                let c = analyze_const(&v, dictionary, errors);
+                                arr.push(c.unwrap_or(ConstValue::Undefined));
+                            }
+                            Some(ConstValue::Array(arr))
+                        }
+                    },
                     expression_parser::Literals::String(str) => {
                         Some(ConstValue::String(str.clone()))
                     }
@@ -819,12 +1038,45 @@ pub mod dictionary {
                 None
             }
         }
+        pub fn into_number(&self) -> Option<(f64, char)> {
+            match self {
+                ConstValue::Number(f) => Some((*f, 'n')),
+                ConstValue::Char(c) => Some((*c as usize as f64, 'c')),
+                ConstValue::Int(i) => Some((*i as f64, 'i')),
+                ConstValue::Float(f) => Some((*f, 'f')),
+                ConstValue::Usize(i) => Some((*i as f64, 'u')),
+                _ => None,
+            }
+        }
+        pub fn is_array(&self) -> bool {
+            match self {
+                ConstValue::Array(_) => true,
+                _ => false,
+            }
+        }
+        pub fn apply_unary(&mut self, op: &Operators) {
+            match self {
+                ConstValue::Number(f) => match op {
+                    Operators::Minus => *f *= -1.0,
+                    _ => (),
+                },
+                ConstValue::Int(i) => match op {
+                    Operators::Minus => *i *= -1,
+                    _ => (),
+                },
+                ConstValue::Float(f) => match op {
+                    Operators::Minus => *f *= -1.0,
+                    _ => (),
+                },
+                ConstValue::Bool(b) => match op {
+                    Operators::Not => *b = !*b,
+                    _ => (),
+                },
+                _ => {},
+            }
+        }
     }
-    /// identifiers can not contain these characters: + - * / = % ; : , . ({<[]>}) & | ! ? " '
-    /// map: let i: Int = 32; i = i + 63;
-    ///     - match {keyword? => keyword(?), value? => value(?)} => keyword(let), identifier("i"), match {: => Type, = => None} => Type(Int), operator(=), value(32);
-    ///     - match {keyword? => keyword(?), value? => value} => value, value("i"), operator(=), value("i"), operator(+), value(63);
-    #[derive(Debug)]
+    /*#[derive(Debug)]
     pub enum Types {
         Int,
         Float,
@@ -841,10 +1093,10 @@ pub mod dictionary {
         Function(String, GenericExpr),
         Enum(String, GenericExpr),
         Struct(String, GenericExpr),
-    }
+    }*/
     type GenericExpr = Vec<ShallowType>;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct ShallowType {
         pub is_fun: Option<Box<Function>>,
         /// if Some then it is an array of that length
@@ -959,7 +1211,7 @@ pub mod dictionary {
         ReferenceDiff(i32),
         /// both are arrays, but they have different lengths
         /// len1 len2
-        ArrayDiff(usize, usize)
+        ArrayDiff(usize, usize),
     }
 }
 pub mod AnalyzationError {
@@ -995,5 +1247,9 @@ pub mod AnalyzationError {
         NotCodeBlock,
         /// not_operator | occurs when you try to use operator that is not operator (probably wont happen tho)
         NotOperator,
+        /// cannot_initialize_constant | occurs when you try to initialize constant with something that is not constant
+        CannotInitializeConstant(String),
+        /// missong_operator | occurs when expression expects operator but there is none
+        MissingOperator,
     }
 }

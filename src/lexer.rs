@@ -119,7 +119,7 @@ pub mod tokenizer {
             Tokens::Space => " ".to_string(),
             Tokens::Text(string) => string.to_string(),
             Tokens::DoubleColon => "::".to_string(),
-            Tokens::Number(_, _, _) => todo!(),
+            Tokens::Number(_, _) => todo!(),
             _ => "".to_string(),
         }
     }
@@ -154,11 +154,12 @@ pub mod tokenizer {
         Space,
         /// content
         String(String),
+        Char(char),
         Whitespace(String),
         /// in case we can not identify token at the moment
         Text(String),
         DoubleColon,
-        Number(usize, f64, char),
+        Number(f64, char),
         Tab,
         Deleted,
         EndOfFile,

@@ -627,6 +627,7 @@ variable identifier tail
 
 literal value
 	"'number" ? set="value" end="true"
+	"'char" ? set="value" end="true"
 	"'string" ? set="value" end="true"
 	array_expr ? set="value" end="false"
 	"'any" err="not a literal value";

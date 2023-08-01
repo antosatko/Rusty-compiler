@@ -242,7 +242,7 @@ pub fn node_from_node(node: &tree_walker::tree_walker::Node, errors: &mut Vec<Er
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Nodes {
     Let {
         ident: String,
@@ -299,7 +299,7 @@ pub enum Nodes {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Catch {
     ident: String,
     kinds: Vec<Vec<String>>,

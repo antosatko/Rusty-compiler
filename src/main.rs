@@ -60,6 +60,8 @@ fn main() {
             } else {
                 panic!("hruzostrasna pohroma");
             }; //tokenize(&string, true);
+            println!("Tokens generated. {:?}", tokens.0);
+            println!("error: {:?}", tokens.2);
             let parsed_tree = generate_tree(&tokens.0, &ast, &tokens.1);
             println!("AST generated.");
             println!(

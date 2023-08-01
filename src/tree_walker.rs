@@ -497,19 +497,19 @@ pub mod tree_walker {
                     return CompareResult::NotEq;
                 }
                 "'number" => {
-                    if let Tokens::Number(_, _, _) = source_token {
+                    if let Tokens::Number(_, _) = source_token {
                         return CompareResult::Eq;
                     }
                     return CompareResult::NotEq;
                 }
                 "'float" => {
-                    if let Tokens::Number(_, _, kind) = source_token {
+                    if let Tokens::Number(_, kind) = source_token {
                         return if *kind == 'f' {CompareResult::Eq} else {CompareResult::NotEq};
                     }
                     return CompareResult::NotEq;
                 }
                 "'int" => {
-                    if let Tokens::Number(_, _, kind) = source_token {
+                    if let Tokens::Number(_, kind) = source_token {
                         return if *kind == 'i' {CompareResult::Eq} else {CompareResult::NotEq};
                     }
                     return CompareResult::NotEq;
@@ -520,12 +520,12 @@ pub mod tree_walker {
                     }
                     return CompareResult::NotEq;
                 }
-                /*"'char" => {
+                "'char" => {
                     if let Tokens::Char(_) = source_token {
                         return CompareResult::Eq;
                     }
                     return CompareResult::NotEq;
-                }*/
+                }
                 "'eof" => {
                     if let Tokens::EndOfFile = source_token {
                         return CompareResult::Eq;

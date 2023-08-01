@@ -1,5 +1,6 @@
 use core::panic;
 use std::fmt::{format, self};
+use std::ops::Index;
 
 use crate::intermediate::dictionary::*;
 use crate::intermediate::AnalyzationError::ErrType;
@@ -206,7 +207,7 @@ pub fn try_get_literal(
         }
     }
     let this = step_inside_val(&node, "value");
-    if let Tokens::Number(_, _, _) = &this.name {
+    if let Tokens::Number(_, _) = &this.name {
         return Some(Literal {
             unary: prepend.2,
             refs: prepend.0.clone(),
@@ -220,6 +221,14 @@ pub fn try_get_literal(
             refs: prepend.0.clone(),
             modificatior: prepend.1.clone(),
             value: Literals::String(str.clone()),
+        });
+    }
+    if let Tokens::Char(chr) = &this.name {
+        return Some(Literal {
+            unary: prepend.2,
+            refs: prepend.0.clone(),
+            modificatior: prepend.1.clone(),
+            value: Literals::Char(chr.clone()),
         });
     }
     if let Tokens::Text(txt) = &this.name {
@@ -398,11 +407,11 @@ pub fn try_get_op(node: &Node, errors: &mut Vec<ErrType>) -> Option<Operators> {
     None
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExprNode {
-    left: Option<ValueType>,
-    right: Option<ValueType>,
-    operator: Option<Operators>,
+    pub left: Option<ValueType>,
+    pub right: Option<ValueType>,
+    pub operator: Option<Operators>,
 }
 impl ExprNode {
     pub fn new(
@@ -424,7 +433,7 @@ impl ExprNode {
         }
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ValueType {
     Literal(Literal),
     AnonymousFunction(Function),
@@ -444,7 +453,7 @@ impl ValueType {
         ValueType::Literal(val)
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Literal {
     pub unary: Option<Operators>,
     pub refs: Ref,
@@ -454,15 +463,17 @@ pub struct Literal {
 }
 impl Literal {
     pub fn is_simple(&self) -> bool {
-        self.unary.is_none() && self.refs == Ref::None && self.modificatior.is_none()
+        self.refs == Ref::None && self.modificatior.is_none()
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Literals {
     Number(Tokens),
     Array(ArrayRule),
     String(String),
+    Char(char),
 }
+#[derive(Clone)]
 pub enum ArrayRule {
     Fill{value: Box<ValueType>, size: Box<ValueType>},
     Explicit(Vec<ValueType>),
@@ -478,28 +489,37 @@ impl fmt::Debug for ArrayRule {
         }
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Variable {
-    unary: Option<Operators>,
-    refs: Ref,
+    pub unary: Option<Operators>,
+    pub refs: Ref,
     /// atm only keyword new, so bool would be sufficient, but who knows what will be in the future updates
-    modificatior: Option<String>,
+    pub modificatior: Option<String>,
     /// for longer variables
     /// example: *danda[5].touch_grass(9)
     ///           ~~~~~ <- this is considered root
-    root: String,
+    pub root: String,
     /// for longer variables
     /// example: danda[5].touch_grass(9)
     /// danda is root .. rest is tail
-    tail: Vec<TailNodes>,
+    pub tail: Vec<TailNodes>,
 }
 
-#[derive(Debug)]
+impl Variable {
+    pub fn is_simple(&self) -> bool {
+        self.refs == Ref::None && self.modificatior.is_none() && self.tail.iter().all(|x| match x {
+            TailNodes::Nested(_) => true,
+            _ => false
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct FunctionCall {
     generic: Vec<ShallowType>,
     args: Vec<ValueType>,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TailNodes {
     Nested(String),
     Index(ValueType),

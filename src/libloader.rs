@@ -85,8 +85,8 @@ pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
                                 ))
                             }
                         }
-                        if let Tokens::Number(num, _, _) = step_inside_val(key, "default").name {
-                            variants.push((ident, num));
+                        if let Tokens::Number(num, _) = step_inside_val(key, "default").name {
+                            variants.push((ident, num as usize));
                         }else {
                             // use last + 1
                             if let Some(last) = variants.last() {
@@ -140,7 +140,7 @@ pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
                     let ident = get_ident(&node);
                     let val = &step_inside_val(&node, "value");
                     let value = match &step_inside_val(val, "value").name {
-                        Tokens::Number(n1, n2, c) => ConstValue::Number(*n1, *n2, *c),
+                        Tokens::Number(n, c) => ConstValue::Number(*n, *c),
                         Tokens::String(text) => ConstValue::Text(text.to_string()),
                         Tokens::Text(bool) => match bool.as_str() {
                             "true" => ConstValue::Bool(true),
@@ -187,8 +187,8 @@ fn from_tree(node: &Node) -> Result<Dictionary, String> {
 
 fn get_assign(node: &Node) -> usize {
     let node = step_inside_val(&node, "assign");
-    if let Tokens::Number(num, _ , _) = step_inside_val(node, "num").name {
-        return num;
+    if let Tokens::Number(num , _) = step_inside_val(node, "num").name {
+        return num as usize;
     }
     //println!("node: {:?}", node);
     panic!("hruzostrasna pohroma");
@@ -344,7 +344,7 @@ pub struct Const {
 
 #[derive(Debug)]
 pub enum ConstValue {
-    Number(usize, f64, char),
+    Number(f64, char),
     Text(String),
     Bool(bool),
 }

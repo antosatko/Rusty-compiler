@@ -233,7 +233,7 @@ mod formater {
                                 let mut float = String::from("0.");
                                 float.push_str(txt2);
                                 if let Ok(num2) = float.parse::<f64>() {
-                                    tokens[idx] = Tokens::Number(first_num, num2, 'f');
+                                    tokens[idx] = Tokens::Number(first_num as f64 + num2, 'f');
                                     tokens.remove(idx + 1);
                                     tokens.remove(idx + 1);
                                     lines.remove(idx + 1);
@@ -253,7 +253,7 @@ mod formater {
                         } else {
                             if bytes[bytes.len() - 1].is_ascii_digit() {
                                 if let Ok(num) = txt.parse::<usize>() {
-                                    tokens[idx] = Tokens::Number(num, 0f64, 'i')
+                                    tokens[idx] = Tokens::Number(num as f64, 'i')
                                 } else {
                                     errors.push(Errors::InvalidNumber(lines[idx], txt.to_string()));
                                     // syntax err: incorrect number
@@ -261,7 +261,7 @@ mod formater {
                             } else {
                                 if let Ok(num) = txt[..txt.len() - 1].parse::<usize>() {
                                     tokens[idx] =
-                                        Tokens::Number(num, 0f64, bytes[bytes.len() - 1] as char)
+                                        Tokens::Number(num as f64, bytes[bytes.len() - 1] as char)
                                 } else {
                                     errors.push(Errors::InvalidNumber(lines[idx], txt.to_string()));
                                     // syntax err: incorrect number

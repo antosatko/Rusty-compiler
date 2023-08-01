@@ -1,12 +1,14 @@
 // here i test behavior of parser for variables and expressions
-
+const NOT_WORKING: [int; 5] = [CIRNO, ARRAY]
 const ABOMINATION: int = 1
                         + -50
-                        * danda.getName[5+6]<sedm>(NameTypes.FIRST) as int 
-                        / (5f) as int
-const CIRNO: string = "fumo"
-const BOOL: bool = true
-const ARRAY: [int; 3] = [1, 2, 3]
+                        // * danda.getName[5+6]<sedm>(NameTypes.FIRST) as int 
+                        // / (5f) as int
+const CIRNO: string = "fumo" + (" Cirno" + " fumo")
+const BOOL: bool = (!true)
+const AHOJ: bool = BOOL
+const CHARACTER: char = ''
+const ARRAY: [int; 3] = [1c, 2, 3]
 const ARRAY_BUILDER: [int; 3] = [5; 15]
 const DYNAMIC_ARRAY: &[int; _] = new [1, 2, 3]
 const DYNAMIC_ARRAY_BUILDER: &[int; _] = new [5; 15]
