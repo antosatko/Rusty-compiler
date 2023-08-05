@@ -5,7 +5,8 @@ use lexing_preprocessor::*;
 
 pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
     let (mut tokens, mut lines, mut errs) = tokenizer::tokenize(string, true);
-    let ast = if let Some(ast) = generate_ast("ast/registry.ast") {
+    let ast_path = std::env::var("RUDA_PATH").unwrap() + "/registry.ast";
+    let ast = if let Some(ast) = generate_ast(&ast_path) {
         ast
     } else {
         return Err("".to_owned());

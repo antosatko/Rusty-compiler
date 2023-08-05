@@ -42,7 +42,8 @@ fn main() {
             file.read_to_string(&mut string).expect("neco se pokazilo");
             let string = string.into_bytes();
             use lexer::tokenizer::*;
-            let ast = if let Some(ast) = generate_ast("ast/ruda.ast") {
+            let ast_path = std::env::var("RUDA_PATH").unwrap() + "/ruda.ast";
+            let ast = if let Some(ast) = generate_ast(&ast_path) {
                 ast
             } else {
                 panic!();
