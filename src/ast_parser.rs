@@ -5,7 +5,7 @@ pub mod ast_parser {
 
     use super::formater::refactor;
     use crate::lexer::tokenizer::*;
-    pub fn generate_ast(source_path: &str) -> Option<Tree> {
+    pub fn generate_ast(source_path: &str) -> Option<(Tree, Vec<HeadParam>)> {
         use std::fs;
         let source =
             fs::read_to_string(source_path).expect("Unexpected problem while opening AST file");
@@ -20,14 +20,30 @@ pub mod ast_parser {
             return None;
         }
     }
-    fn analize_tree(tokens: &mut Vec<Tokens>) -> Tree {
+    fn analize_tree(tokens: &mut Vec<Tokens>) -> (Tree, Vec<HeadParam>) {
         let mut hash_map = HashMap::new();
         let mut idx = 0;
         while let Some(head) = read_head(tokens, &mut idx) {
             hash_map.insert(head.name.to_string(), head);
             idx += 1;
         }
-        hash_map
+        let globals = get_globals(&hash_map);
+        (hash_map, globals)
+    }
+    fn get_globals(tree: &HashMap<String, Head>) -> Vec<HeadParam> {
+        let mut globals = vec![];
+        for (name, node) in tree {
+            if name == "globals" {
+                for param in &node.parameters {
+                    let global = match param {
+                        HeadParam::Array(name) => HeadParam::Array(name.to_string()),
+                        HeadParam::Value(name) => HeadParam::Value(name.to_string()),
+                    };
+                    globals.push(global);
+                }
+            }
+        }
+        globals
     }
     fn read_head(tokens: &mut Vec<Tokens>, idx: &mut usize) -> Option<Head> {
         if tokens.len() == *idx {

@@ -4,6 +4,9 @@ This is main AST
 Full documentation for this file format can be found in ast/readme
 "
 
+globals [imports
+	"'any" err="";
+
 
 entry [nodes
 	KWFun ? set="nodes" back="0"
@@ -82,7 +85,6 @@ KWConst identifier type expression public
 	"pub" ? set="public"
 	"const" harderr="true"
 	ident set="identifier"
-	type_specifier set="type"
 	=
 	expression set="expression"
 	;?;
@@ -155,7 +157,7 @@ import ""std.time"" as tm;
 "
 KWImport path identifier
 	"import" harderr="true"
-	"'string" set="path"
+	"'string" set="path imports"
 	"as" ?
 		ident set="identifier"
 	;?;

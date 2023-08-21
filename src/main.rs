@@ -4,7 +4,6 @@ use ast_parser::ast_parser::generate_ast;
 use std::{env, fs::File, hint::black_box, io::Read, time::SystemTime};
 use tree_walker::tree_walker::generate_tree;
 
-mod ast_analyzer;
 mod ast_parser;
 mod lexer;
 //mod reader;
@@ -42,8 +41,8 @@ fn main() {
             file.read_to_string(&mut string).expect("neco se pokazilo");
             let string = string.into_bytes();
             use lexer::tokenizer::*;
-            let ast_path = std::env::var("RUDA_PATH").unwrap() + "/ruda.ast";
-            let ast = if let Some(ast) = generate_ast(&ast_path) {
+            let ast_path = std::env::var("RUDA_PATH").expect("RUDA_PATH not set.") + "/ruda.ast";
+            let mut ast = if let Some(ast) = generate_ast(&ast_path) {
                 ast
             } else {
                 panic!();
@@ -62,8 +61,15 @@ fn main() {
                 panic!("hruzostrasna pohroma");
             }; //tokenize(&string, true);
             println!("Tokens generated. {:?}", tokens.0);
-            println!("error: {:?}", tokens.2);
-            let parsed_tree = generate_tree(&tokens.0, &ast, &tokens.1);
+            if tokens.2.len() > 0 {
+                println!("Compilation failed.");
+                println!("Errors:");
+                for err in tokens.2 {
+                    println!("{:?}", err);
+                }
+                return;
+            }
+            let parsed_tree = generate_tree(&tokens.0, (&ast.0, &mut ast.1), &tokens.1);
             println!("AST generated.");
             println!(
                 "time: {}",
@@ -71,8 +77,9 @@ fn main() {
             );
             use intermediate::dictionary;
             match &parsed_tree {
-                Some(tree) => {
+                Some((tree, globals)) => {
                     dictionary::from_ast(&tree.nodes);
+                    println!("{:#?}", globals);
                     println!("Dictionary generated.");
                     println!(
                         "time: {}",
@@ -93,7 +100,7 @@ fn main() {
             if false {
                 if let Some(nodes) = &parsed_tree {
                     use tree_walker::tree_walker::ArgNodeType;
-                    for nod in &nodes.nodes {
+                    for nod in &nodes.0.nodes {
                         println!("{:?}", nod.0);
                         match nod.1 {
                             ArgNodeType::Array(arr) => {
@@ -135,7 +142,7 @@ fn main() {
                 }
             };
             if let Some(ast) = generate_ast(&file_name) {
-                for node in ast {
+                for node in ast.0 {
                     println!("{:?}\n", node)
                 }
             } else {

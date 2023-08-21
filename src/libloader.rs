@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{intermediate::{self, AnalyzationError::ErrType}, lexer::tokenizer::{Tokens, self, Operators}, ast_parser::ast_parser::generate_ast, tree_walker::tree_walker::{generate_tree, Node, Err}, lexing_preprocessor::{lexing_preprocessor, parse_err::Errors}, expression_parser::{ValueType, get_args}};
 use intermediate::dictionary::*;
 use lexing_preprocessor::*;
@@ -11,7 +13,7 @@ pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
     } else {
         return Err("".to_owned());
     };
-    let tree = if let Some(tree) = generate_tree(&tokens, &ast, &lines) {
+    let tree = if let Some(tree) = generate_tree(&tokens, (&ast.0, &mut vec![]), &lines) {
         println!("{:?}", tree);
         tree
     } else {
@@ -19,7 +21,7 @@ pub fn load(string: &mut Vec<u8>) -> Result<Dictionary, String> {
     };
     let mut errors = Vec::new();
     let mut dictionary = Dictionary::new();
-    for node in step_inside_arr(&tree, "nodes") {
+    for node in step_inside_arr(&tree.0, "nodes") {
         if let Tokens::Text(name) = &node.name {
             match name.as_str() {
                 "KWStruct" => {

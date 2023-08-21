@@ -1,20 +1,40 @@
 pub mod tree_walker {
     use std::collections::HashMap;
+    use std::os::windows::prelude::HandleOrInvalid;
 
     use crate::ast_parser::ast_parser::{self, *};
     use crate::lexer::tokenizer::{*, self};
-    pub fn generate_tree(tokens: &Vec<Tokens>, syntax: &Tree, lines: &Vec<(usize, usize)>) -> Option<Node> {
+    pub fn generate_tree(tokens: &Vec<Tokens>, syntax: (&Tree, &mut Vec<HeadParam>), lines: &Vec<(usize, usize)>) -> Option<(Node, HashMap<String, ArgNodeType>)> {
         let mut idx = 0;
+        let mut globals_data = HashMap::new();
+        for global in syntax.1 {
+            match global {
+                HeadParam::Array(arr) => {
+                    globals_data.insert(arr.to_string(), ArgNodeType::Array(vec![]));
+                }
+                HeadParam::Value(val) => {
+                    globals_data.insert(
+                        val.to_string(),
+                        ArgNodeType::Value(Node {
+                            name: Tokens::Text(String::from("'none")),
+                            data: None,
+                            nodes: HashMap::new(),
+                        }),
+                    );
+                }
+            }
+        }
         let product = parse_node(
             &tokens,
-            &syntax,
+            &syntax.0,
             &HashMap::new(),
             &mut idx,
             &String::from("entry"),
+            &mut globals_data
         );
         match product {
             Ok(prd) => {
-                Some(prd)
+                Some((prd, globals_data))
             }
             Err(err) => {
                 println!("{err:?}\nOriginated at line: {}, column: {}", lines[idx].1 + 1, lines[idx].0 + 1);
@@ -57,6 +77,7 @@ pub mod tree_walker {
         params: &NodeParameters,
         idx: &mut usize,
         id: &String,
+        globals: &mut HashMap<String, ArgNodeType>
     ) -> Result<Node, (Err, bool)> {
         let mut result = Node {
             name: Tokens::Text(id.into()),
@@ -71,6 +92,7 @@ pub mod tree_walker {
             &syntax.get(id).unwrap().nodes,
             &mut result.nodes,
             &mut false,
+            globals
         ) {
             Ok(_) => {
                 return Ok(result);
@@ -89,6 +111,7 @@ pub mod tree_walker {
         nodes: &Vec<ast_parser::NodeType>,
         data: &mut HashMap<String, super::tree_walker::ArgNodeType>,
         harderr: &mut bool,
+        globals: &mut HashMap<String, ArgNodeType>
     ) -> Result<Option<(usize, ReturnActions)>, (Err, bool)> {
         let mut node_idx = 0;
         let mut advance_tok;
@@ -166,8 +189,22 @@ pub mod tree_walker {
                     }
                 }
                 else if let Some(arg) = $args.get("set") {
-                    set($token, $node, &mut data.get_mut(arg.into()).unwrap());
-                    //println!("{:?}", data);
+                    // Split the argument by space
+                    for arg_part in arg.split_whitespace() {
+                        // Find place of arg_part
+                        let mut place = match data.get_mut(arg_part.into()) {
+                            Some(place) => place,
+                            None => {
+                                if let Some(place) = globals.get_mut(arg_part.into()) {
+                                    place
+                                } else {
+                                    Error!(Err::EmptyNodeParameter(arg_part.into()), true);
+                                    continue; // Skip to the next part of the argument
+                                }
+                            }
+                        };
+                        set($token, $node, &mut place);
+                    }
                 }
                 if let Some(ident) = $args.get("data") {
                     println!("{:?}", data.get(ident).expect("wrong identifier for data"));
@@ -195,7 +232,7 @@ pub mod tree_walker {
         }
         macro_rules! ScopeEnter {
             ($node: expr, $freeze: expr) => {
-                match parse_scope(&tokens, &syntax, &params, idx, &$node.nodes, data, harderr) {
+                match parse_scope(&tokens, &syntax, &params, idx, &$node.nodes, data, harderr, globals) {
                     Ok(back) => match back {
                         Some(back) => match back.1 {
                             ReturnActions::Freeze => {
@@ -220,10 +257,10 @@ pub mod tree_walker {
         macro_rules! OpenStruct {
             ($ident: expr, $node: expr, $recoverable: expr) => {
                 let start_idx = *idx;
-                match parse_node(&tokens, &syntax, &$node.arguments, idx, &$ident.into()) {
+                match parse_node(&tokens, &syntax, &$node.arguments, idx, &$ident.into(), globals) {
                     Ok(nd) => {
                         ScopeEnter!(&$node, true);
-                        ArgsCheck!(&$node.arguments, &$node.kind, TokenOrNode::Node(nd));
+                        ArgsCheck!(&$node.arguments, &$node.kind, TokenOrNode::Node(nd.clone()));
                         advance_tok = false;
                         Advance!();
                     }
@@ -619,13 +656,13 @@ pub mod tree_walker {
         EmptyNodeParameter(String),
     }
     /// structures defined by user
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Node {
         pub name: Tokens,
         pub data: Option<Tokens>,
         pub nodes: HashMap<String, ArgNodeType>,
     }
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub enum ArgNodeType {
         Array(Vec<Node>),
         Value(Node),

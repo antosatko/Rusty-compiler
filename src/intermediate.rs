@@ -33,7 +33,6 @@ pub mod dictionary {
                     changes.push((i, val));
                 }
             }
-            println!("iterating changes: {}", changes.len());
             if changes.len() > 0 {
                 while let Some((i, val)) = changes.pop() {
                     dictionary.constants[i].real_value = Some(val);
@@ -259,6 +258,8 @@ pub mod dictionary {
                     generics: get_generics_decl(node, errors),
                     traits: Vec::new(),
                     public: public(&node),
+                    memory_layout: Vec::new(),
+                    ptrs: 0,
                 };
                 for key in step_inside_arr(node, "keys") {
                     let ident = get_ident(&key);
@@ -403,13 +404,8 @@ pub mod dictionary {
             }
             "KWConst" => {
                 let identifier = get_ident(&node);
-                let kind = get_type(
-                    step_inside_val(&step_inside_val(&node, "type"), "type"),
-                    errors,
-                );
                 if dictionary.register_id(identifier.to_string(), IdentifierKinds::Variable) {
                     dictionary.constants.push(Constant {
-                        kind,
                         identifier,
                         location: 0,
                         public: public(&node),
@@ -934,6 +930,9 @@ pub mod dictionary {
         pub src_loc: usize,
         pub traits: Vec<NestedIdent>,
         pub public: bool,
+        pub memory_layout: Vec<(String, usize)>,
+        /// number of pointers in struct
+        pub ptrs: usize,
     }
     #[derive(Debug)]
     pub struct Implementation {
@@ -953,7 +952,6 @@ pub mod dictionary {
     }
     #[derive(Debug)]
     pub struct Constant {
-        pub kind: ShallowType,
         pub identifier: String,
         /// location on stack
         pub location: usize,
