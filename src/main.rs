@@ -4,6 +4,8 @@ use ast_parser::ast_parser::generate_ast;
 use std::{env, fs::File, hint::black_box, io::Read, time::SystemTime};
 use tree_walker::tree_walker::generate_tree;
 
+use crate::tree_walker::tree_walker::ArgNodeType;
+
 mod ast_parser;
 mod lexer;
 //mod reader;
@@ -78,8 +80,16 @@ fn main() {
             use intermediate::dictionary;
             match &parsed_tree {
                 Some((tree, globals)) => {
-                    dictionary::from_ast(&tree.nodes);
-                    println!("{:#?}", globals);
+                    let mut imports = Vec::new();
+                    if let ArgNodeType::Array(arr) = globals.get("imports").unwrap() {
+                        for global in arr {
+                            if let Tokens::String(str) = &global.name {
+                                imports.push(str.to_string());
+                            }
+                        }
+                    }
+                    println!("Imports: {:?}", imports);
+                    dictionary::from_ast(&tree.nodes, &imports);
                     println!("Dictionary generated.");
                     println!(
                         "time: {}",

@@ -1,4 +1,4 @@
-import "std.string" as danda
+import "demo/variables.rd" as danda
 
 
 // here i test behavior of parser for variables and expressions
